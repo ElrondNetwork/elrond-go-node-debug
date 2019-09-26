@@ -2,7 +2,9 @@ package facade
 
 import (
 	"fmt"
+	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/node/heartbeat"
+	"github.com/ElrondNetwork/elrond-go/process"
 	"strconv"
 	"sync"
 
@@ -25,6 +27,7 @@ const DefaultRestPortOff = "off"
 // ElrondNodeFacade represents a facade for grouping the functionality for node, transaction and address
 type DebugVMFacade struct {
 	apiResolver            baseFacade.ApiResolver
+	txProcessor            process.TransactionProcessor
 	syncer                 ntp.SyncTimer
 	log                    *logger.Logger
 	tpsBenchmark           *statistics.TpsBenchmark
@@ -41,13 +44,21 @@ func (ef *DebugVMFacade) GetHeartbeats() ([]heartbeat.PubKeyHeartbeat, error) {
 }
 
 // NewElrondNodeFacade creates a new Facade with a NodeWrapper
-func NewDebugVMFacade(apiResolver baseFacade.ApiResolver, restAPIServerDebugMode bool) *DebugVMFacade {
+func NewDebugVMFacade(
+	apiResolver baseFacade.ApiResolver,
+	txProcessor process.TransactionProcessor,
+	restAPIServerDebugMode bool,
+) *DebugVMFacade {
 	if apiResolver == nil || apiResolver.IsInterfaceNil() {
+		return nil
+	}
+	if txProcessor == nil || txProcessor.IsInterfaceNil() {
 		return nil
 	}
 
 	return &DebugVMFacade{
 		apiResolver:            apiResolver,
+		txProcessor:            txProcessor,
 		restAPIServerDebugMode: restAPIServerDebugMode,
 	}
 }
@@ -164,6 +175,49 @@ func (ef *DebugVMFacade) StatusMetrics() external.StatusMetricsHandler {
 // GetVmValue retrieves data from existing SC trie
 func (ef *DebugVMFacade) GetVmValue(address string, funcName string, argsBuff ...[]byte) ([]byte, error) {
 	return ef.apiResolver.GetVmValue(address, funcName, argsBuff...)
+}
+
+const defaultRound uint64 = 444
+
+func (ef *DebugVMFacade) DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error) {
+	tx := &transaction.Transaction{
+		Nonce:     0,
+		Value:     nil,
+		RcvAddr:   nil,
+		SndAddr:   nil,
+		GasPrice:  0,
+		GasLimit:  0,
+		Data:      "",
+		Signature: nil,
+		Challenge: nil,
+	}
+
+	err := ef.txProcessor.ProcessTransaction(tx, defaultRound)
+
+	return nil, err
+}
+
+func (ef *DebugVMFacade) RunSmartContract(
+	sndAddress string,
+	scAddress string,
+	funcName string,
+	argsBuff ...[]byte,
+) ([]byte, error) {
+	tx := &transaction.Transaction{
+		Nonce:     0,
+		Value:     nil,
+		RcvAddr:   nil,
+		SndAddr:   nil,
+		GasPrice:  0,
+		GasLimit:  0,
+		Data:      "",
+		Signature: nil,
+		Challenge: nil,
+	}
+
+	err := ef.txProcessor.ProcessTransaction(tx, defaultRound)
+
+	return nil, err
 }
 
 // PprofEnabled returns if profiling mode should be active or not on the application
