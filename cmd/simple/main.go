@@ -29,9 +29,10 @@ func main() {
 	gasLimit := uint64(100000)
 	transferOnCalls := big.NewInt(5)
 
-	scCode, err := ioutil.ReadFile("./wrc20_arwen.wasm")
+	wasmFile := argsWithoutProg[0]
+	scCode, err := ioutil.ReadFile(wasmFile)
 	if err != nil {
-		fmt.Println("Error on reading wasm file " + argsWithoutProg[0] + " " + err.Error())
+		fmt.Println("Error on reading wasm file " + wasmFile + " " + err.Error())
 		return
 	}
 
