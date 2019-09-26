@@ -15,7 +15,7 @@ import (
 type FacadeHandler interface {
 	GetVmValue(address string, funcName string, argsBuff ...[]byte) ([]byte, error)
 	DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error)
-	RunSmartContract(sndAddress string, scAddress string, funcName string, argsBuff ...[]byte) ([]byte, error)
+	RunSmartContract(sndAddress string, scAddress string, value string, funcName string, argsBuff ...[]byte) ([]byte, error)
 	IsInterfaceNil() bool
 }
 
@@ -37,6 +37,7 @@ type DeploySCRequest struct {
 type RunSCRequest struct {
 	SndAddress string   `form:"sndAddress" json:"sndAddress"`
 	ScAddress  string   `form:"scAddress" json:"scAddress"`
+	Value      string   `form:"value" json:"value"`
 	FuncName   string   `form:"funcName" json:"funcName"`
 	Args       []string `form:"args"  json:"args"`
 }
@@ -222,7 +223,7 @@ func runSCforAccount(c *gin.Context) ([]byte, int, error) {
 			errors.New(fmt.Sprintf("'%s' is not a valid hex string: %s", gval.SndAddress, err.Error()))
 	}
 
-	returnedData, err := ef.RunSmartContract(string(sndBytes), string(adrBytes), gval.FuncName, argsBuff...)
+	returnedData, err := ef.RunSmartContract(string(sndBytes), string(adrBytes), gval.Value, gval.FuncName, argsBuff...)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}

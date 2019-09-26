@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	debugVMFacade "github.com/ElrondNetwork/elrond-go-node-debug/facade"
+	debugNode "github.com/ElrondNetwork/elrond-go-node-debug/node"
 	"github.com/ElrondNetwork/elrond-go/cmd/node/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core"
@@ -59,6 +60,13 @@ var configurationFile = cli.StringFlag{
 	Value: "./config/config.toml",
 }
 
+// genesisFile defines a flag for the path of the bootstrapping file.
+var genesisFile = cli.StringFlag{
+	Name:  "genesis-file",
+	Usage: "The node will extract bootstrapping info from the genesis.json",
+	Value: "./config/genesis.json",
+}
+
 func main() {
 	log := logger.DefaultLogger()
 
@@ -70,6 +78,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		restApiPort,
 		configurationFile,
+		genesisFile,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -151,6 +160,11 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
+	processorNode, err := debugNode.NewSimpleDebugNode(accountsAdapter, ctx.GlobalString(genesisFile.Name))
+	if err != nil {
+		return err
+	}
+
 	statusMetrics := statusHandler.NewStatusMetrics()
 	apiResolver, err := createApiResolver(
 		accountsAdapter,
@@ -162,7 +176,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	ef := debugVMFacade.NewDebugVMFacade(apiResolver, true)
+	ef := debugVMFacade.NewDebugVMFacade(apiResolver, processorNode, true)
 
 	efConfig := &config.FacadeConfig{
 		RestApiPort: ctx.GlobalString(restApiPort.Name),
