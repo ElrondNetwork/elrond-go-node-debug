@@ -7,13 +7,15 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/ElrondNetwork/elrond-go/api"
+	"github.com/ElrondNetwork/elrond-go-node-debug/api/vmValues"
+	"github.com/ElrondNetwork/elrond-go/api/middleware"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core/logger"
 	"github.com/ElrondNetwork/elrond-go/core/statistics"
 	baseFacade "github.com/ElrondNetwork/elrond-go/facade"
 	"github.com/ElrondNetwork/elrond-go/node/external"
 	"github.com/ElrondNetwork/elrond-go/ntp"
+	"github.com/gin-gonic/gin"
 )
 
 // DefaultRestPort is the default port the REST API will start on if not specified
@@ -153,16 +155,19 @@ func (ef *DebugVMFacade) PrometheusNetworkID() string {
 func (ef *DebugVMFacade) startRest(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	switch ef.RestApiPort() {
-	case DefaultRestPortOff:
+	port := ef.RestApiPort()
+
+	if port == DefaultRestPortOff {
 		ef.log.Info(fmt.Sprintf("Web server is off"))
-		break
-	default:
+	} else {
 		ef.log.Info("Starting web server...")
-		err := api.Start(ef)
-		if err != nil {
-			ef.log.Error("Could not start webserver", err.Error())
-		}
+
+		ws := gin.Default()
+		vmValuesRoutes := ws.Group("/vm-values")
+		vmValuesRoutes.Use(middleware.WithElrondFacade(ef))
+		vmValues.Routes(vmValuesRoutes)
+
+		ws.Run(fmt.Sprintf(":%s", port))
 	}
 }
 
