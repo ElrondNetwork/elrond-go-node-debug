@@ -126,13 +126,15 @@ func GetVmValueAsBigInt(c *gin.Context) {
 
 // DeploySmartContract returns the data as big int
 func DeploySmartContract(c *gin.Context) {
-	data, status, err := deploySCforAccount(c)
+	scAddress, status, err := deploySCforAccount(c)
+
 	if err != nil {
 		c.JSON(status, gin.H{"error": fmt.Sprintf("deploy smart contract: %s", err)})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": string(data)})
+	scAddressEncoded := hex.EncodeToString(scAddress)
+	c.JSON(http.StatusOK, gin.H{"data": scAddressEncoded})
 }
 
 // RunSmartContract returns the data as big int
