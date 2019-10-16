@@ -145,7 +145,8 @@ func RunSmartContract(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": string(data)})
+	dataEncoded := hex.EncodeToString(data)
+	c.JSON(http.StatusOK, gin.H{"data": dataEncoded})
 }
 
 func deploySCforAccount(c *gin.Context) ([]byte, int, error) {
