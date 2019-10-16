@@ -10,4 +10,4 @@ require (
 	github.com/urfave/cli v1.20.0
 )
 
-replace github.com/ElrondNetwork/arwen-wasm-vm v0.0.8 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.8-0.20190924093235-0ac964b6bbe2
+replace github.com/ElrondNetwork/arwen-wasm-vm v0.0.8 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.9-0.20191016093011-2ff76585ab63
