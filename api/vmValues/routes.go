@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/ElrondNetwork/elrond-go-node-debug/node"
 	"math/big"
 	"net/http"
 
@@ -15,7 +16,7 @@ import (
 type FacadeHandler interface {
 	GetVmValue(address string, funcName string, argsBuff ...[]byte) ([]byte, error)
 	DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error)
-	RunSmartContract(sndAddress string, scAddress string, value string, funcName string, argsBuff ...[]byte) ([]byte, error)
+	RunSmartContract(command node.RunSmartContractCommand) ([]byte, error)
 	IsInterfaceNil() bool
 }
 
@@ -38,6 +39,8 @@ type RunSCRequest struct {
 	SndAddress string   `form:"sndAddress" json:"sndAddress"`
 	ScAddress  string   `form:"scAddress" json:"scAddress"`
 	Value      string   `form:"value" json:"value"`
+	GasLimit   uint64   `form:"gasLimit" json:"gasLimit"`
+	GasPrice   uint64   `form:"gasPrice" json:"gasPrice"`
 	FuncName   string   `form:"funcName" json:"funcName"`
 	Args       []string `form:"args"  json:"args"`
 }
@@ -226,7 +229,17 @@ func runSCforAccount(c *gin.Context) ([]byte, int, error) {
 			errors.New(fmt.Sprintf("'%s' is not a valid hex string: %s", gval.SndAddress, err.Error()))
 	}
 
-	returnedData, err := ef.RunSmartContract(string(sndBytes), string(adrBytes), gval.Value, gval.FuncName, argsBuff...)
+	command := node.RunSmartContractCommand{
+		SndAddress:   string(sndBytes),
+		ScAddress:    string(adrBytes),
+		Value:        gval.Value,
+		GasLimit:     gval.GasLimit,
+		GasPrice:     gval.GasPrice,
+		FuncName:     gval.FuncName,
+		FuncArgsBuff: argsBuff,
+	}
+
+	returnedData, err := ef.RunSmartContract(command)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}

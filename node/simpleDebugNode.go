@@ -16,8 +16,19 @@ import (
 
 type ProcessSmartContract interface {
 	DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error)
-	RunSmartContract(sndAddress string, scAddress string, value string, funcName string, argsBuff ...[]byte) ([]byte, error)
+	RunSmartContract(command RunSmartContractCommand) ([]byte, error)
 	IsInterfaceNil() bool
+}
+
+// RunSmartContractCommand represents the request for running a smart contract.
+type RunSmartContractCommand struct {
+	SndAddress   string
+	ScAddress    string
+	Value        string
+	GasPrice     uint64
+	GasLimit     uint64
+	FuncName     string
+	FuncArgsBuff [][]byte
 }
 
 type SimpleDebugNode struct {
@@ -115,8 +126,9 @@ func (node *SimpleDebugNode) DeploySmartContract(address string, code string, ar
 	return resultingAddress, nil
 }
 
-func (node *SimpleDebugNode) RunSmartContract(sndAddress string, scAddress string, value string, funcName string, argsBuff ...[]byte) ([]byte, error) {
-	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(sndAddress))
+// RunSmartContract runs a smart contract (a function defined by the smart contract) according to the request.
+func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) ([]byte, error) {
+	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -131,30 +143,31 @@ func (node *SimpleDebugNode) RunSmartContract(sndAddress string, scAddress strin
 		return nil, errors.New("wrong type of account")
 	}
 
-	val, ok := big.NewInt(0).SetString(value, 10)
+	valueAsString := command.Value
+	value, ok := big.NewInt(0).SetString(valueAsString, 10)
 	if !ok {
 		return nil, errors.New("value is not in base 10 format")
 	}
 
-	if stAcc.Balance.Cmp(val) < 0 {
-		err = stAcc.SetBalanceWithJournal(val)
+	if stAcc.Balance.Cmp(value) < 0 {
+		err = stAcc.SetBalanceWithJournal(value)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	txData := funcName
-	for _, arg := range argsBuff {
+	txData := command.FuncName
+	for _, arg := range command.FuncArgsBuff {
 		txData += "@" + hex.EncodeToString(arg)
 	}
 
 	tx := &transaction.Transaction{
 		Nonce:     account.GetNonce(),
-		Value:     val,
-		RcvAddr:   []byte(scAddress),
-		SndAddr:   []byte(sndAddress),
-		GasPrice:  0,
-		GasLimit:  10000,
+		Value:     value,
+		RcvAddr:   []byte(command.ScAddress),
+		SndAddr:   []byte(command.SndAddress),
+		GasPrice:  command.GasPrice,
+		GasLimit:  command.GasLimit,
 		Data:      txData,
 		Signature: nil,
 		Challenge: nil,

@@ -185,14 +185,9 @@ func (ef *DebugVMFacade) DeploySmartContract(address string, code string, argsBu
 	return ef.debugNode.DeploySmartContract(address, code, argsBuff...)
 }
 
-func (ef *DebugVMFacade) RunSmartContract(
-	sndAddress string,
-	scAddress string,
-	value string,
-	funcName string,
-	argsBuff ...[]byte,
-) ([]byte, error) {
-	return ef.debugNode.RunSmartContract(sndAddress, scAddress, value, funcName, argsBuff...)
+// RunSmartContract runs a smart contract function.
+func (ef *DebugVMFacade) RunSmartContract(command node.RunSmartContractCommand) ([]byte, error) {
+	return ef.debugNode.RunSmartContract(command)
 }
 
 // PprofEnabled returns if profiling mode should be active or not on the application
