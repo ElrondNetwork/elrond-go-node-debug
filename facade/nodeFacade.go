@@ -181,8 +181,9 @@ func (ef *DebugVMFacade) GetVmValue(address string, funcName string, argsBuff ..
 	return ef.apiResolver.GetVmValue(address, funcName, argsBuff...)
 }
 
-func (ef *DebugVMFacade) DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error) {
-	return ef.debugNode.DeploySmartContract(address, code, argsBuff...)
+// RunSmartContract deploys a smart contract.
+func (ef *DebugVMFacade) DeploySmartContract(command node.DeploySmartContractCommand) ([]byte, error) {
+	return ef.debugNode.DeploySmartContract(command)
 }
 
 // RunSmartContract runs a smart contract function.

@@ -14,13 +14,21 @@ import (
 	"math/big"
 )
 
+// ProcessSmartContract is the interface that holds functions for processing smart contracts.
 type ProcessSmartContract interface {
-	DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error)
+	DeploySmartContract(command DeploySmartContractCommand) ([]byte, error)
 	RunSmartContract(command RunSmartContractCommand) ([]byte, error)
 	IsInterfaceNil() bool
 }
 
-// RunSmartContractCommand represents the request for running a smart contract.
+// DeploySmartContractCommand represents the command for deploying a smart contract.
+type DeploySmartContractCommand struct {
+	SndAddress string
+	Code       string
+	ArgsBuff   [][]byte
+}
+
+// RunSmartContractCommand represents the command for running a smart contract.
 type RunSmartContractCommand struct {
 	SndAddress   string
 	ScAddress    string
@@ -80,8 +88,9 @@ func NewSimpleDebugNode(accnts state.AccountsAdapter, genesisFile string) (*Simp
 
 const defaultRound uint64 = 444
 
-func (node *SimpleDebugNode) DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error) {
-	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(address))
+// DeploySmartContract deploys a smart contract (with its code).
+func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractCommand) ([]byte, error) {
+	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -91,12 +100,12 @@ func (node *SimpleDebugNode) DeploySmartContract(address string, code string, ar
 		return nil, err
 	}
 
-	txData := code + "@" + hex.EncodeToString(factory.ArwenVirtualMachine)
-	for _, arg := range argsBuff {
+	txData := command.Code + "@" + hex.EncodeToString(factory.ArwenVirtualMachine)
+	for _, arg := range command.ArgsBuff {
 		txData += "@" + hex.EncodeToString(arg)
 	}
 
-	resultingAddress, err := node.blockChainHook.NewAddress([]byte(address), account.GetNonce(), factory.ArwenVirtualMachine)
+	resultingAddress, err := node.blockChainHook.NewAddress([]byte(command.SndAddress), account.GetNonce(), factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +114,7 @@ func (node *SimpleDebugNode) DeploySmartContract(address string, code string, ar
 		Nonce:     account.GetNonce(),
 		Value:     big.NewInt(0),
 		RcvAddr:   debugInit.CreateEmptyAddress().Bytes(),
-		SndAddr:   []byte(address),
+		SndAddr:   []byte(command.SndAddress),
 		GasPrice:  0,
 		GasLimit:  10000,
 		Data:      txData,
@@ -126,7 +135,7 @@ func (node *SimpleDebugNode) DeploySmartContract(address string, code string, ar
 	return resultingAddress, nil
 }
 
-// RunSmartContract runs a smart contract (a function defined by the smart contract) according to the request.
+// RunSmartContract runs a smart contract (a function defined by the smart contract).
 func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) ([]byte, error) {
 	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {

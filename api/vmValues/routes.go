@@ -15,7 +15,7 @@ import (
 // FacadeHandler interface defines methods that can be used from `elrondFacade` context variable
 type FacadeHandler interface {
 	GetVmValue(address string, funcName string, argsBuff ...[]byte) ([]byte, error)
-	DeploySmartContract(address string, code string, argsBuff ...[]byte) ([]byte, error)
+	DeploySmartContract(command node.DeploySmartContractCommand) ([]byte, error)
 	RunSmartContract(command node.RunSmartContractCommand) ([]byte, error)
 	IsInterfaceNil() bool
 }
@@ -183,7 +183,13 @@ func deploySCforAccount(c *gin.Context) ([]byte, int, error) {
 			errors.New(fmt.Sprintf("'%s' is not a valid hex string: %s", gval.SndAddress, err.Error()))
 	}
 
-	returnedData, err := ef.DeploySmartContract(string(adrBytes), gval.Code, argsBuff...)
+	command := node.DeploySmartContractCommand{
+		SndAddress: string(adrBytes),
+		Code:       gval.Code,
+		ArgsBuff:   argsBuff,
+	}
+
+	returnedData, err := ef.DeploySmartContract(command)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
