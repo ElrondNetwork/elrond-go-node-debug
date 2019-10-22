@@ -3,6 +3,8 @@ package node
 import (
 	"encoding/hex"
 	"errors"
+	"math/big"
+
 	debugInit "github.com/ElrondNetwork/elrond-go-node-debug/process"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
@@ -11,7 +13,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	"github.com/ElrondNetwork/elrond-go/sharding"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
-	"math/big"
 )
 
 // ProcessSmartContract is the interface that holds functions for processing smart contracts.
@@ -23,20 +24,26 @@ type ProcessSmartContract interface {
 
 // DeploySmartContractCommand represents the command for deploying a smart contract.
 type DeploySmartContractCommand struct {
-	SndAddress string
-	Code       string
-	ArgsBuff   [][]byte
+	OnTestnet           bool
+	PrivateKey          string
+	TestnetNodeEndpoint string
+	SndAddress          string
+	Code                string
+	ArgsBuff            [][]byte
 }
 
 // RunSmartContractCommand represents the command for running a smart contract.
 type RunSmartContractCommand struct {
-	SndAddress   string
-	ScAddress    string
-	Value        string
-	GasPrice     uint64
-	GasLimit     uint64
-	FuncName     string
-	FuncArgsBuff [][]byte
+	OnTestnet           bool
+	PrivateKey          string
+	TestnetNodeEndpoint string
+	SndAddress          string
+	ScAddress           string
+	Value               string
+	GasPrice            uint64
+	GasLimit            uint64
+	FuncName            string
+	FuncArgsBuff        [][]byte
 }
 
 type SimpleDebugNode struct {
@@ -90,6 +97,14 @@ const defaultRound uint64 = 444
 
 // DeploySmartContract deploys a smart contract (with its code).
 func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractCommand) ([]byte, error) {
+	if command.OnTestnet {
+		return node.deploySmartContractOnTestnet(command)
+	}
+
+	return node.deploySmartContractOnDebugNode(command)
+}
+
+func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartContractCommand) ([]byte, error) {
 	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
 		return nil, err
@@ -133,6 +148,10 @@ func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractComm
 	}
 
 	return resultingAddress, nil
+}
+
+func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartContractCommand) ([]byte, error) {
+	return nil, nil
 }
 
 // RunSmartContract runs a smart contract (a function defined by the smart contract).
