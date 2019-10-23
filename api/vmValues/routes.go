@@ -215,7 +215,7 @@ func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartCo
 		PrivateKey:          request.PrivateKey,
 		TestnetNodeEndpoint: request.TestnetNodeEndpoint,
 		SndAddressEncoded:   request.SndAddress,
-		SndAddress:          string(adrBytes),
+		SndAddress:          adrBytes,
 		Code:                request.Code,
 		ArgsBuff:            argsBuff,
 	}
@@ -248,7 +248,7 @@ func convertRequestToRunCommand(ginContext *gin.Context) (*node.RunSmartContract
 
 	command := &node.RunSmartContractCommand{
 		SndAddressEncoded: request.SndAddress,
-		SndAddress:        string(sndBytes),
+		SndAddress:        sndBytes,
 		ScAddress:         string(adrBytes),
 		Value:             request.Value,
 		GasLimit:          request.GasLimit,
