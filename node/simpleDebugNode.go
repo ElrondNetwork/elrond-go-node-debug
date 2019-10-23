@@ -2,13 +2,23 @@ package node
 
 import (
 	"encoding/hex"
+	"encoding/json"
+	"encoding/pem"
 	"errors"
+	"fmt"
+	"log"
 	"math/big"
+	"net/http"
 
 	debugInit "github.com/ElrondNetwork/elrond-go-node-debug/process"
+	"github.com/ElrondNetwork/elrond-go/crypto"
+	"github.com/ElrondNetwork/elrond-go/crypto/signing"
+	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber"
+	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber/singlesig"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
+	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	"github.com/ElrondNetwork/elrond-go/sharding"
@@ -27,6 +37,7 @@ type DeploySmartContractCommand struct {
 	OnTestnet           bool
 	PrivateKey          string
 	TestnetNodeEndpoint string
+	SndAddressEncoded   string
 	SndAddress          string
 	Code                string
 	ArgsBuff            [][]byte
@@ -37,6 +48,7 @@ type RunSmartContractCommand struct {
 	OnTestnet           bool
 	PrivateKey          string
 	TestnetNodeEndpoint string
+	SndAddressEncoded   string
 	SndAddress          string
 	ScAddress           string
 	Value               string
@@ -105,6 +117,28 @@ func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractComm
 }
 
 func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartContractCommand) ([]byte, error) {
+	privateKey, _ := readPrivateKeyFromPemText(command.PrivateKey)
+	publicKey, _ := privateKey.GeneratePublic().ToByteArray()
+
+	nonce, _ := getNonce(command.TestnetNodeEndpoint, command.SndAddressEncoded)
+
+	tx := transaction.Transaction{
+		Nonce:    nonce,
+		Value:    big.NewInt(0),
+		RcvAddr:  debugInit.CreateEmptyAddress().Bytes(),
+		SndAddr:  publicKey,
+		Data:     "",
+		GasLimit: 10000,
+		GasPrice: 0,
+	}
+
+	txBuff, _ := marshal.JsonMarshalizer{}.Marshal(&tx)
+	signer := &singlesig.SchnorrSigner{}
+	tx.Signature, _ = signer.Sign(privateKey, txBuff)
+
+	log.Println("deploySmartContractOnTestnet, transaction:")
+	log.Println(string(txBuff))
+
 	return nil, nil
 }
 
@@ -226,4 +260,38 @@ func (node *SimpleDebugNode) IsInterfaceNil() bool {
 		return true
 	}
 	return false
+}
+
+type getNonceResponse struct {
+	Address string `json:"address"`
+	Nonce   uint64 `json:"nonce"`
+}
+
+func getNonce(nodeAPIUrl string, senderAddress string) (uint64, error) {
+	url := fmt.Sprintf("%s/address/%s", nodeAPIUrl, senderAddress)
+	log.Println(url)
+	response, err := http.Get(url)
+	if err != nil {
+		return 0, err
+	}
+
+	defer response.Body.Close()
+	structuredResponse := getNonceResponse{}
+	err = json.NewDecoder(response.Body).Decode(&structuredResponse)
+	return structuredResponse.Nonce, err
+}
+
+func readPrivateKeyFromPemText(pemText string) (crypto.PrivateKey, error) {
+	suite := kyber.NewSuitePairingBn256()
+	keyGenerator := signing.NewKeyGenerator(suite)
+	keyBlock, _ := pem.Decode([]byte(pemText))
+	keyBytes := keyBlock.Bytes
+
+	keyBytesDecoded, err := hex.DecodeString(string(keyBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := keyGenerator.PrivateKeyFromByteArray(keyBytesDecoded)
+	return privateKey, err
 }
