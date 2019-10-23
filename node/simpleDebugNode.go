@@ -207,7 +207,38 @@ func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) (
 }
 
 func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractCommand) ([]byte, error) {
-	return nil, nil
+	privateKey, _ := readPrivateKeyFromPemText(command.PrivateKey)
+	publicKey, _ := privateKey.GeneratePublic().ToByteArray()
+
+	nonce, err := getNonce(command.TestnetNodeEndpoint, publicKey)
+	if err != nil {
+		return nil, err
+	}
+
+	valueAsString := command.Value
+	value, ok := big.NewInt(0).SetString(valueAsString, 10)
+	if !ok {
+		return nil, errors.New("value is not in base 10 format")
+	}
+
+	txData := command.FuncName
+	for _, arg := range command.FuncArgsBuff {
+		txData += "@" + hex.EncodeToString(arg)
+	}
+
+	tx := &transaction.Transaction{
+		Nonce:    nonce,
+		Value:    value,
+		RcvAddr:  []byte(command.ScAddress),
+		SndAddr:  publicKey,
+		GasPrice: command.GasPrice,
+		GasLimit: command.GasLimit,
+		Data:     txData,
+	}
+
+	txBuff := signAndstringifyTransaction(tx, privateKey)
+	err = sendTransaction(command.TestnetNodeEndpoint, txBuff)
+	return nil, err
 }
 
 func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContractCommand) ([]byte, error) {
