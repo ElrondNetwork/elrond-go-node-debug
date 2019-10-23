@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
@@ -302,7 +303,11 @@ func (node *SimpleDebugNode) IsInterfaceNil() bool {
 	return false
 }
 
-type getNonceResponse struct {
+type addressResource struct {
+	Account *accountResource `json:"account"`
+}
+
+type accountResource struct {
 	Address string `json:"address"`
 	Nonce   uint64 `json:"nonce"`
 }
@@ -318,9 +323,15 @@ func getNonce(nodeAPIUrl string, senderAddress []byte) (uint64, error) {
 	}
 
 	defer response.Body.Close()
-	structuredResponse := getNonceResponse{}
-	err = json.NewDecoder(response.Body).Decode(&structuredResponse)
-	return structuredResponse.Nonce, err
+	body, _ := ioutil.ReadAll(response.Body)
+	fmt.Println("Response:")
+	fmt.Println(string(body))
+	address := addressResource{}
+	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&address)
+	nonce := address.Account.Nonce
+	fmt.Println("Nonce:")
+	fmt.Println(nonce)
+	return nonce, err
 }
 
 type sendTransactionResponse struct {
@@ -356,8 +367,11 @@ func sendTransaction(nodeAPIUrl string, txBuff []byte) error {
 	}
 
 	defer response.Body.Close()
+	body, _ := ioutil.ReadAll(response.Body)
+	fmt.Println("Response:")
+	fmt.Println(string(body))
 	structuredResponse := sendTransactionResponse{}
-	err = json.NewDecoder(response.Body).Decode(&structuredResponse)
+	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&structuredResponse)
 	return err
 }
 
