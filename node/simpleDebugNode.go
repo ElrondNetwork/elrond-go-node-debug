@@ -104,6 +104,10 @@ func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractComm
 	return node.deploySmartContractOnDebugNode(command)
 }
 
+func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartContractCommand) ([]byte, error) {
+	return nil, nil
+}
+
 func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartContractCommand) ([]byte, error) {
 	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
@@ -150,12 +154,20 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 	return resultingAddress, nil
 }
 
-func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartContractCommand) ([]byte, error) {
+// RunSmartContract runs a smart contract (a function defined by the smart contract).
+func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) ([]byte, error) {
+	if command.OnTestnet {
+		return node.runSmartContractOnTestnet(command)
+	}
+
+	return node.runSmartContractOnDebugNode(command)
+}
+
+func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractCommand) ([]byte, error) {
 	return nil, nil
 }
 
-// RunSmartContract runs a smart contract (a function defined by the smart contract).
-func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) ([]byte, error) {
+func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContractCommand) ([]byte, error) {
 	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
 		return nil, err
