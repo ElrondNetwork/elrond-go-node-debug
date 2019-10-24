@@ -25,7 +25,7 @@ const DefaultRestPort = "8080"
 //  to start the node without a REST endpoint available
 const DefaultRestPortOff = "off"
 
-// ElrondNodeFacade represents a facade for grouping the functionality for node, transaction and address
+// DebugVMFacade represents a facade for grouping the functionality for node, transaction and address
 type DebugVMFacade struct {
 	apiResolver            baseFacade.ApiResolver
 	debugNode              node.ProcessSmartContract
@@ -44,19 +44,8 @@ func (ef *DebugVMFacade) GetHeartbeats() ([]heartbeat.PubKeyHeartbeat, error) {
 	return nil, nil
 }
 
-// NewElrondNodeFacade creates a new Facade with a NodeWrapper
-func NewDebugVMFacade(
-	apiResolver baseFacade.ApiResolver,
-	debugNode node.ProcessSmartContract,
-	restAPIServerDebugMode bool,
-) *DebugVMFacade {
-	if apiResolver == nil || apiResolver.IsInterfaceNil() {
-		return nil
-	}
-	if debugNode == nil || debugNode.IsInterfaceNil() {
-		return nil
-	}
-
+// NewDebugVMFacade creates a new Facade with a NodeWrapper
+func NewDebugVMFacade(apiResolver baseFacade.ApiResolver, debugNode node.ProcessSmartContract, restAPIServerDebugMode bool) *DebugVMFacade {
 	return &DebugVMFacade{
 		apiResolver:            apiResolver,
 		debugNode:              debugNode,
