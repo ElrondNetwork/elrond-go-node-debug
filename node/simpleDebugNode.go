@@ -42,7 +42,6 @@ type DeploySmartContractCommand struct {
 	SndAddressEncoded   string
 	SndAddress          []byte
 	Code                string
-	ArgsBuff            [][]byte
 }
 
 // RunSmartContractCommand represents the command for running a smart contract.
@@ -52,12 +51,11 @@ type RunSmartContractCommand struct {
 	TestnetNodeEndpoint string
 	SndAddressEncoded   string
 	SndAddress          []byte
-	ScAddress           string
+	ScAddress           []byte
 	Value               string
 	GasPrice            uint64
 	GasLimit            uint64
-	FuncName            string
-	FuncArgsBuff        [][]byte
+	TxData              string
 }
 
 type SimpleDebugNode struct {
@@ -128,9 +126,6 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 	}
 
 	txData := command.Code + "@" + hex.EncodeToString(factory.ArwenVirtualMachine)
-	for _, arg := range command.ArgsBuff {
-		txData += "@" + hex.EncodeToString(arg)
-	}
 
 	tx := &transaction.Transaction{
 		Nonce:    nonce,
@@ -164,9 +159,6 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 	}
 
 	txData := command.Code + "@" + hex.EncodeToString(factory.ArwenVirtualMachine)
-	for _, arg := range command.ArgsBuff {
-		txData += "@" + hex.EncodeToString(arg)
-	}
 
 	resultingAddress, err := node.blockChainHook.NewAddress(command.SndAddress, account.GetNonce(), factory.ArwenVirtualMachine)
 	if err != nil {
@@ -222,19 +214,14 @@ func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractC
 		return nil, errors.New("value is not in base 10 format")
 	}
 
-	txData := command.FuncName
-	for _, arg := range command.FuncArgsBuff {
-		txData += "@" + hex.EncodeToString(arg)
-	}
-
 	tx := &transaction.Transaction{
 		Nonce:    nonce,
 		Value:    value,
-		RcvAddr:  []byte(command.ScAddress),
+		RcvAddr:  command.ScAddress,
 		SndAddr:  publicKey,
 		GasPrice: command.GasPrice,
 		GasLimit: command.GasLimit,
-		Data:     txData,
+		Data:     command.TxData,
 	}
 
 	txBuff := signAndstringifyTransaction(tx, privateKey)
@@ -271,19 +258,14 @@ func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContrac
 		}
 	}
 
-	txData := command.FuncName
-	for _, arg := range command.FuncArgsBuff {
-		txData += "@" + hex.EncodeToString(arg)
-	}
-
 	tx := &transaction.Transaction{
 		Nonce:     account.GetNonce(),
 		Value:     value,
-		RcvAddr:   []byte(command.ScAddress),
-		SndAddr:   []byte(command.SndAddress),
+		RcvAddr:   command.ScAddress,
+		SndAddr:   command.SndAddress,
 		GasPrice:  command.GasPrice,
 		GasLimit:  command.GasLimit,
-		Data:      txData,
+		Data:      command.TxData,
 		Signature: nil,
 		Challenge: nil,
 	}

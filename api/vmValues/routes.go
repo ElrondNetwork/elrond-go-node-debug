@@ -30,26 +30,24 @@ type VmValueRequest struct {
 
 // DeploySCRequest represents the structure on which user input for generating a new transaction will validate against
 type DeploySCRequest struct {
-	OnTestnet           bool     `form:"onTestnet" json:"onTestnet"`
-	PrivateKey          string   `form:"privateKey" json:"privateKey"`
-	TestnetNodeEndpoint string   `form:"testnetNodeEndpoint" json:"testnetNodeEndpoint"`
-	SndAddress          string   `form:"sndAddress" json:"sndAddress"`
-	Code                string   `form:"code" json:"code"`
-	Args                []string `form:"args"  json:"args"`
+	OnTestnet           bool   `form:"onTestnet" json:"onTestnet"`
+	PrivateKey          string `form:"privateKey" json:"privateKey"`
+	TestnetNodeEndpoint string `form:"testnetNodeEndpoint" json:"testnetNodeEndpoint"`
+	SndAddress          string `form:"sndAddress" json:"sndAddress"`
+	Code                string `form:"code" json:"code"`
 }
 
 // RunSCRequest represents the structure on which user input for generating a new transaction will validate against
 type RunSCRequest struct {
-	OnTestnet           bool     `form:"onTestnet" json:"onTestnet"`
-	PrivateKey          string   `form:"privateKey" json:"privateKey"`
-	TestnetNodeEndpoint string   `form:"testnetNodeEndpoint" json:"testnetNodeEndpoint"`
-	SndAddress          string   `form:"sndAddress" json:"sndAddress"`
-	ScAddress           string   `form:"scAddress" json:"scAddress"`
-	Value               string   `form:"value" json:"value"`
-	GasLimit            uint64   `form:"gasLimit" json:"gasLimit"`
-	GasPrice            uint64   `form:"gasPrice" json:"gasPrice"`
-	FuncName            string   `form:"funcName" json:"funcName"`
-	Args                []string `form:"args"  json:"args"`
+	OnTestnet           bool   `form:"onTestnet" json:"onTestnet"`
+	PrivateKey          string `form:"privateKey" json:"privateKey"`
+	TestnetNodeEndpoint string `form:"testnetNodeEndpoint" json:"testnetNodeEndpoint"`
+	SndAddress          string `form:"sndAddress" json:"sndAddress"`
+	ScAddress           string `form:"scAddress" json:"scAddress"`
+	Value               string `form:"value" json:"value"`
+	GasLimit            uint64 `form:"gasLimit" json:"gasLimit"`
+	GasPrice            uint64 `form:"gasPrice" json:"gasPrice"`
+	TxData              string `form:"txData" json:"txData"`
 }
 
 // Routes defines address related routes
@@ -200,11 +198,6 @@ func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartCo
 		return nil, err
 	}
 
-	argsBuff, err := decodeHexStrings(request.Args)
-	if err != nil {
-		return nil, err
-	}
-
 	adrBytes, err := hex.DecodeString(request.SndAddress)
 	if err != nil {
 		return nil, fmt.Errorf("'%s' is not a valid hex string: %s", request.SndAddress, err.Error())
@@ -217,7 +210,6 @@ func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartCo
 		SndAddressEncoded:   request.SndAddress,
 		SndAddress:          adrBytes,
 		Code:                request.Code,
-		ArgsBuff:            argsBuff,
 	}
 
 	return command, nil
@@ -227,11 +219,6 @@ func convertRequestToRunCommand(ginContext *gin.Context) (*node.RunSmartContract
 	request := RunSCRequest{}
 
 	err := ginContext.ShouldBindJSON(&request)
-	if err != nil {
-		return nil, err
-	}
-
-	argsBuff, err := decodeHexStrings(request.Args)
 	if err != nil {
 		return nil, err
 	}
@@ -252,28 +239,12 @@ func convertRequestToRunCommand(ginContext *gin.Context) (*node.RunSmartContract
 		TestnetNodeEndpoint: request.TestnetNodeEndpoint,
 		SndAddressEncoded:   request.SndAddress,
 		SndAddress:          sndBytes,
-		ScAddress:           string(adrBytes),
+		ScAddress:           adrBytes,
 		Value:               request.Value,
 		GasLimit:            request.GasLimit,
 		GasPrice:            request.GasPrice,
-		FuncName:            request.FuncName,
-		FuncArgsBuff:        argsBuff,
+		TxData:              request.TxData,
 	}
 
 	return command, nil
-}
-
-func decodeHexStrings(strings []string) ([][]byte, error) {
-	result := make([][]byte, 0)
-
-	for _, str := range strings {
-		buff, err := hex.DecodeString(str)
-		if err != nil {
-			return nil, fmt.Errorf("'%s' is not a valid hex string: %s", str, err.Error())
-		}
-
-		result = append(result, buff)
-	}
-
-	return result, nil
 }
