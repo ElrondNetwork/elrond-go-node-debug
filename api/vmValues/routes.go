@@ -203,6 +203,10 @@ func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartCo
 		return nil, fmt.Errorf("'%s' is not a valid hex string: %s", request.SndAddress, err.Error())
 	}
 
+	if request.OnTestnet && request.PrivateKey == "" {
+		return nil, fmt.Errorf("private key is missing")
+	}
+
 	command := &node.DeploySmartContractCommand{
 		OnTestnet:           request.OnTestnet,
 		PrivateKey:          request.PrivateKey,
@@ -231,6 +235,10 @@ func convertRequestToRunCommand(ginContext *gin.Context) (*node.RunSmartContract
 	sndBytes, err := hex.DecodeString(request.SndAddress)
 	if err != nil {
 		return nil, fmt.Errorf("'%s' is not a valid hex string: %s", request.SndAddress, err.Error())
+	}
+
+	if request.OnTestnet && request.PrivateKey == "" {
+		return nil, fmt.Errorf("private key is missing")
 	}
 
 	command := &node.RunSmartContractCommand{
