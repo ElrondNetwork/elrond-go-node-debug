@@ -1,6 +1,8 @@
 package process
 
 import (
+	"encoding/hex"
+	"fmt"
 	"math/big"
 
 	"github.com/ElrondNetwork/elrond-go/data/state"
@@ -65,6 +67,8 @@ func CreateEmptyAddress() state.AddressContainer {
 }
 
 func CreateAccount(accnts state.AccountsAdapter, pubKey []byte, nonce uint64, balance *big.Int) []byte {
+	fmt.Printf("CreateAccount %s, balance = %s\n", hex.EncodeToString(pubKey), balance.String())
+
 	address, _ := addrConv.CreateAddressFromPublicKeyBytes(pubKey)
 	account, _ := accnts.GetAccountWithJournal(address)
 	_ = account.(*state.Account).SetNonceWithJournal(nonce)
