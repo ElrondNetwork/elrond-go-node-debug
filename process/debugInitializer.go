@@ -12,6 +12,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go/integrationTests/mock"
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
+	"github.com/ElrondNetwork/elrond-go/process/coordinator"
 	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
@@ -96,8 +97,22 @@ func CreateTxProcessorWithOneSCExecutorWithVMs(
 		addrConv,
 		oneShardCoordinator,
 		&mock.IntermediateTransactionHandlerMock{},
+		&MyTransactionFeeHandlerStub{},
 	)
-	txProcessor, _ := transaction.NewTxProcessor(accnts, testHasher, addrConv, testMarshalizer, oneShardCoordinator, scProcessor)
+
+	txTypeHandler, _ := coordinator.NewTxTypeHandler(addrConv, oneShardCoordinator, accnts)
+
+	txProcessor, _ := transaction.NewTxProcessor(
+		accnts,
+		testHasher,
+		addrConv,
+		testMarshalizer,
+		oneShardCoordinator,
+		scProcessor,
+		&MyTransactionFeeHandlerStub{},
+		txTypeHandler,
+		&MyFeeHandlerStub{},
+	)
 
 	return txProcessor, vmFactory.VMAccountsDB()
 }
