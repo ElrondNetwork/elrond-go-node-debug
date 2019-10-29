@@ -41,7 +41,7 @@ type DeploySmartContractCommand struct {
 	TestnetNodeEndpoint string
 	SndAddressEncoded   string
 	SndAddress          []byte
-	Code                string
+	TxData              string
 }
 
 // RunSmartContractCommand represents the command for running a smart contract.
@@ -125,14 +125,12 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		return nil, err
 	}
 
-	txData := command.Code + "@" + hex.EncodeToString(factory.ArwenVirtualMachine)
-
 	tx := &transaction.Transaction{
 		Nonce:    nonce,
 		Value:    big.NewInt(0),
 		RcvAddr:  debugInit.CreateEmptyAddress().Bytes(),
 		SndAddr:  publicKey,
-		Data:     txData,
+		Data:     command.TxData,
 		GasLimit: 10000,
 		GasPrice: 0,
 	}
@@ -158,8 +156,6 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 		return nil, err
 	}
 
-	txData := command.Code + "@" + hex.EncodeToString(factory.ArwenVirtualMachine)
-
 	resultingAddress, err := node.blockChainHook.NewAddress(command.SndAddress, account.GetNonce(), factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
@@ -172,7 +168,7 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 		SndAddr:   []byte(command.SndAddress),
 		GasPrice:  0,
 		GasLimit:  10000,
-		Data:      txData,
+		Data:      command.TxData,
 		Signature: nil,
 		Challenge: nil,
 	}

@@ -34,7 +34,7 @@ type DeploySCRequest struct {
 	PrivateKey          string `form:"privateKey" json:"privateKey"`
 	TestnetNodeEndpoint string `form:"testnetNodeEndpoint" json:"testnetNodeEndpoint"`
 	SndAddress          string `form:"sndAddress" json:"sndAddress"`
-	Code                string `form:"code" json:"code"`
+	TxData              string `form:"txData" json:"txData"`
 }
 
 // RunSCRequest represents the structure on which user input for generating a new transaction will validate against
@@ -213,7 +213,7 @@ func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartCo
 		TestnetNodeEndpoint: request.TestnetNodeEndpoint,
 		SndAddressEncoded:   request.SndAddress,
 		SndAddress:          adrBytes,
-		Code:                request.Code,
+		TxData:              request.TxData,
 	}
 
 	return command, nil
