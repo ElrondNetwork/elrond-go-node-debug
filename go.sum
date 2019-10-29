@@ -13,6 +13,10 @@ github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028181937-cd58f9136240 h1:DA8
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028181937-cd58f9136240/go.mod h1:OXmY5a/DdrkSGC9ht4A0vxpTcfXpjlSRPrKIwlJyaiA=
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028200405-9ba7239da0b0 h1:d+UU6e4dNNK+2WywgpyDCF4QlwdmcGu1m0J78GediiA=
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028200405-9ba7239da0b0/go.mod h1:OXmY5a/DdrkSGC9ht4A0vxpTcfXpjlSRPrKIwlJyaiA=
+github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191029124437-9e40d8dde221 h1:Dv3MD3xMqRUM8BPgrxEdD6NxTanOZcxOHIhkjdOVfyA=
+github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191029124437-9e40d8dde221/go.mod h1:OXmY5a/DdrkSGC9ht4A0vxpTcfXpjlSRPrKIwlJyaiA=
+github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191029131735-fe051ae27564 h1:e8N1vyjh2+q/soS3ErPm0mZMMKxYmqkGpxpceEyHPEc=
+github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191029131735-fe051ae27564/go.mod h1:OXmY5a/DdrkSGC9ht4A0vxpTcfXpjlSRPrKIwlJyaiA=
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.8-0.20190924093235-0ac964b6bbe2 h1:AuOc+rntNdb0ET4Ef5FPUZhGSUYqqwsSyHVFyDlK5ek=
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.8-0.20190924093235-0ac964b6bbe2/go.mod h1:uGYpcjg8Oa3tkdS7Yc9sHUgEIPSnmHoDFdodgiZ0iyU=
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.8 h1:Va5y2E3SD+SF+cOWxTpT6MJYNmrd+LE1qUs8VdEzXvU=

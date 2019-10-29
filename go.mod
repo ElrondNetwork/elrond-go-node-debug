@@ -12,12 +12,8 @@ require (
 
 replace github.com/ElrondNetwork/elrond-go => github.com/ElrondNetwork/elrond-go v0.0.0-20191028195157-fce5660bea39
 
-replace github.com/ElrondNetwork/arwen-wasm-vm v0.1.0 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028200405-9ba7239da0b0
+replace github.com/ElrondNetwork/arwen-wasm-vm v0.2.2 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191029131735-fe051ae27564
 
-replace github.com/ElrondNetwork/arwen-wasm-vm v0.2.0 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028200405-9ba7239da0b0
+replace github.com/ElrondNetwork/arwen-wasm-vm v0.2.3 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191029131735-fe051ae27564
 
-replace github.com/ElrondNetwork/arwen-wasm-vm v0.2.2 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028200405-9ba7239da0b0
-
-replace github.com/ElrondNetwork/arwen-wasm-vm v0.2.3 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028200405-9ba7239da0b0
-
-replace github.com/ElrondNetwork/arwen-wasm-vm v0.0.8 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191028200405-9ba7239da0b0
+replace github.com/ElrondNetwork/arwen-wasm-vm v0.2.4 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191029131735-fe051ae27564
