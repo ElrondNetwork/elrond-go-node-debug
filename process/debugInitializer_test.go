@@ -3,18 +3,17 @@ package process
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ElrondNetwork/elrond-go/data/transaction"
+	"github.com/ElrondNetwork/elrond-go/process/factory"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"math/big"
 	"testing"
 	"time"
-
-	"github.com/ElrondNetwork/elrond-go/data/transaction"
-	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
-	ownerAddressBytes := []byte("12345678901234567890123456789012")
+	ownerAddressBytes, _ := hex.DecodeString("1234123400000000000000000000000000000000000000000000000000000000")
 	ownerNonce := uint64(11)
 	ownerBalance := big.NewInt(100000000)
 	round := uint64(444)
@@ -29,12 +28,12 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 
 	tx := &transaction.Transaction{
 		Nonce:     ownerNonce,
-		Value:     transferOnCalls,
+		Value:     big.NewInt(0),
 		RcvAddr:   CreateEmptyAddress().Bytes(),
 		SndAddr:   ownerAddressBytes,
 		GasPrice:  gasPrice,
 		GasLimit:  gasLimit,
-		Data:      scCodeString + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+		Data:      scCodeString + "@" + hex.EncodeToString(factory.ArwenVirtualMachine) + "@100000000",
 		Signature: nil,
 		Challenge: nil,
 	}
@@ -49,22 +48,23 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 
 	scAddress, _ := blockchainHook.NewAddress(ownerAddressBytes, ownerNonce, factory.ArwenVirtualMachine)
 
-	alice := []byte("12345678901234567890123456789111")
+	alice, _ := hex.DecodeString("aaaaaaaaa0000000000000000000000000000000000000000000000000000000")
 	aliceNonce := uint64(0)
 	_ = CreateAccount(accnts, alice, aliceNonce, big.NewInt(1000000))
 
-	bob := []byte("12345678901234567890123456789222")
+	bob, _ := hex.DecodeString("bbbbbbbbb0000000000000000000000000000000000000000000000000000000")
 	_ = CreateAccount(accnts, bob, 0, big.NewInt(1000000))
 
+	ownerNonce++
 	initAlice := big.NewInt(100000)
 	tx = &transaction.Transaction{
-		Nonce:     aliceNonce,
-		Value:     initAlice,
+		Nonce:     ownerNonce,
+		Value:     big.NewInt(0),
 		RcvAddr:   scAddress,
-		SndAddr:   alice,
+		SndAddr:   ownerAddressBytes,
 		GasPrice:  0,
 		GasLimit:  5000,
-		Data:      "topUp",
+		Data:      "transfer_token@" + hex.EncodeToString(alice) + "@" + initAlice.Text(16),
 		Signature: nil,
 		Challenge: nil,
 	}
@@ -77,10 +77,8 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 	_, err = accnts.Commit()
 	assert.Nil(t, err)
 
-	aliceNonce++
-
 	start = time.Now()
-	nrTxs := 10
+	nrTxs := 1000
 
 	for i := 0; i < nrTxs; i++ {
 		tx = &transaction.Transaction{
@@ -90,7 +88,7 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 			SndAddr:   alice,
 			GasPrice:  0,
 			GasLimit:  5000,
-			Data:      "transfer@" + hex.EncodeToString(bob) + "@" + transferOnCalls.String(),
+			Data:      "transfer_token@" + hex.EncodeToString(bob) + "@" + transferOnCalls.String(),
 			Signature: nil,
 			Challenge: nil,
 		}
