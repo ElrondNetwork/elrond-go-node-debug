@@ -23,7 +23,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/node/external"
 	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
-	"github.com/ElrondNetwork/elrond-go/sharding"
 	"github.com/ElrondNetwork/elrond-go/statusHandler"
 	"github.com/urfave/cli"
 )
@@ -143,12 +142,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	shardCoordinator, err := sharding.NewMultiShardCoordinator(1, 0)
-	if err != nil {
-		return err
-	}
-
-	accountFactory, err := factoryState.NewAccountFactoryCreator(shardCoordinator)
+	accountFactory, err := factoryState.NewAccountFactoryCreator(factoryState.UserAccount)
 	if err != nil {
 		fmt.Println("could not create account factory: " + err.Error())
 		return err
