@@ -41,6 +41,9 @@ type DeploySmartContractCommand struct {
 	TestnetNodeEndpoint string
 	SndAddressEncoded   string
 	SndAddress          []byte
+	Value               string
+	GasPrice            uint64
+	GasLimit            uint64
 	TxData              string
 }
 
@@ -130,9 +133,9 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		Value:    big.NewInt(0),
 		RcvAddr:  debugInit.CreateEmptyAddress().Bytes(),
 		SndAddr:  publicKey,
+		GasLimit: command.GasLimit,
+		GasPrice: command.GasPrice,
 		Data:     command.TxData,
-		GasLimit: 10000,
-		GasPrice: 0,
 	}
 
 	resultingAddress, err := node.blockChainHook.NewAddress(publicKey, nonce, factory.ArwenVirtualMachine)
@@ -161,16 +164,20 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 		return nil, err
 	}
 
+	valueAsString := command.Value
+	value, ok := big.NewInt(0).SetString(valueAsString, 10)
+	if !ok {
+		return nil, errors.New("value is not in base 10 format")
+	}
+
 	tx := &transaction.Transaction{
-		Nonce:     account.GetNonce(),
-		Value:     big.NewInt(0),
-		RcvAddr:   debugInit.CreateEmptyAddress().Bytes(),
-		SndAddr:   []byte(command.SndAddress),
-		GasPrice:  0,
-		GasLimit:  10000,
-		Data:      command.TxData,
-		Signature: nil,
-		Challenge: nil,
+		Nonce:    account.GetNonce(),
+		Value:    value,
+		RcvAddr:  debugInit.CreateEmptyAddress().Bytes(),
+		SndAddr:  []byte(command.SndAddress),
+		GasLimit: command.GasLimit,
+		GasPrice: command.GasPrice,
+		Data:     command.TxData,
 	}
 
 	err = node.txProcessor.ProcessTransaction(tx, defaultRound)

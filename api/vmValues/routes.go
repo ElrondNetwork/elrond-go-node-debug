@@ -34,6 +34,9 @@ type DeploySCRequest struct {
 	PrivateKey          string `form:"privateKey" json:"privateKey"`
 	TestnetNodeEndpoint string `form:"testnetNodeEndpoint" json:"testnetNodeEndpoint"`
 	SndAddress          string `form:"sndAddress" json:"sndAddress"`
+	Value               string `form:"value" json:"value"`
+	GasLimit            uint64 `form:"gasLimit" json:"gasLimit"`
+	GasPrice            uint64 `form:"gasPrice" json:"gasPrice"`
 	TxData              string `form:"txData" json:"txData"`
 }
 
@@ -213,6 +216,9 @@ func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartCo
 		TestnetNodeEndpoint: request.TestnetNodeEndpoint,
 		SndAddressEncoded:   request.SndAddress,
 		SndAddress:          adrBytes,
+		Value:               request.Value,
+		GasLimit:            request.GasLimit,
+		GasPrice:            request.GasPrice,
 		TxData:              request.TxData,
 	}
 
