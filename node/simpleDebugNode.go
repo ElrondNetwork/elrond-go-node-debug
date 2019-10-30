@@ -293,7 +293,7 @@ type accountResource struct {
 func getNonce(nodeAPIUrl string, senderAddress []byte) (uint64, error) {
 	senderAddressEncoded := hex.EncodeToString(senderAddress)
 	url := fmt.Sprintf("%s/address/%s", nodeAPIUrl, senderAddressEncoded)
-	log.Println("getNonce, execute GET:")
+	log.Println("getNonce, perform GET:")
 	log.Println(url)
 	response, err := http.Get(url)
 	if err != nil {
@@ -338,6 +338,9 @@ type sendTransactionResponsePayload struct {
 
 func sendTransaction(nodeAPIUrl string, txBuff []byte) error {
 	url := fmt.Sprintf("%s/transaction/send", nodeAPIUrl)
+	log.Println("sendTransaction, perform POST:")
+	log.Println(url)
+	log.Println(string(txBuff))
 
 	response, err := http.Post(url, "application/json", bytes.NewBuffer(txBuff))
 	if err != nil {
