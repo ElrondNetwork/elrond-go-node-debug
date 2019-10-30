@@ -128,9 +128,15 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		return nil, err
 	}
 
+	valueAsString := command.Value
+	value, ok := big.NewInt(0).SetString(valueAsString, 10)
+	if !ok {
+		return nil, errors.New("value is not in base 10 format")
+	}
+
 	tx := &transaction.Transaction{
 		Nonce:    nonce,
-		Value:    big.NewInt(0),
+		Value:    value,
 		RcvAddr:  debugInit.CreateEmptyAddress().Bytes(),
 		SndAddr:  publicKey,
 		GasLimit: command.GasLimit,
