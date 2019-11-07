@@ -2,10 +2,13 @@ package facade
 
 import (
 	"fmt"
-	"github.com/ElrondNetwork/elrond-go-node-debug/node"
-	"github.com/ElrondNetwork/elrond-go/node/heartbeat"
 	"strconv"
 	"sync"
+
+	"github.com/ElrondNetwork/elrond-go-node-debug/node"
+	"github.com/ElrondNetwork/elrond-go/node/heartbeat"
+	"github.com/ElrondNetwork/elrond-go/process/smartContract"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 
 	"github.com/ElrondNetwork/elrond-go-node-debug/api/vmValues"
 	"github.com/ElrondNetwork/elrond-go/api/middleware"
@@ -165,9 +168,9 @@ func (ef *DebugVMFacade) StatusMetrics() external.StatusMetricsHandler {
 	return ef.apiResolver.StatusMetrics()
 }
 
-// GetVmValue retrieves data from existing SC trie
-func (ef *DebugVMFacade) GetVmValue(address string, funcName string, argsBuff ...[]byte) ([]byte, error) {
-	return ef.apiResolver.GetVmValue(address, funcName, argsBuff...)
+// ExecuteQuery retrieves data from existing SC trie
+func (ef *DebugVMFacade) ExecuteSCQuery(query *smartContract.SCQuery) (*vmcommon.VMOutput, error) {
+	return ef.apiResolver.ExecuteSCQuery(query)
 }
 
 // RunSmartContract deploys a smart contract.

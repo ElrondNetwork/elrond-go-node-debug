@@ -33,6 +33,8 @@ github.com/ElrondNetwork/elrond-go v0.0.0-20191028195157-fce5660bea39 h1:Y0S3kN+
 github.com/ElrondNetwork/elrond-go v0.0.0-20191028195157-fce5660bea39/go.mod h1:RouvOY4/ifGYqHQnrGiD1FHApAM1G0NdBOWTMmP4Slo=
 github.com/ElrondNetwork/elrond-go v0.0.0-20191030090918-bfd5bad2b0d3 h1:p4wymPPJ9K2K2Kz4ewCYkoCuRnFRsm8PD0DodXtnxRs=
 github.com/ElrondNetwork/elrond-go v0.0.0-20191030090918-bfd5bad2b0d3/go.mod h1:yn+LO4TYOyWGHSNJLeUpnehcpsfDvDchZxWHRgXQGVA=
+github.com/ElrondNetwork/elrond-go v0.0.0-20191107133704-b70ac863ea20 h1:LwHr/38Q4eQIbZD3sZUGEbei4Sw/EMkWS8gdtaMeUgI=
+github.com/ElrondNetwork/elrond-go v0.0.0-20191107133704-b70ac863ea20/go.mod h1:y17H40WuOXSutsn4jHiQXGhgPzB7ol2ca4wwrVYHtgs=
 github.com/ElrondNetwork/elrond-go v1.0.18-0.20190925090404-cc062628fc67 h1:Fg7dIqfB2Mfb5vS08MQNv1mz/S/fKdKC/LI/kG7ezhk=
 github.com/ElrondNetwork/elrond-go v1.0.18-0.20190925090404-cc062628fc67/go.mod h1:eUGHCCb8ZqXdKib/l1tHLqj/NPgwdY/LfSKVETwjFRw=
 github.com/ElrondNetwork/elrond-vm v0.0.19 h1:9E8spYj9K1DHdF0Osgj1dZUJfKhfBiLBx1xWWfE/HAM=
@@ -42,6 +44,8 @@ github.com/ElrondNetwork/elrond-vm-common v0.0.8 h1:YyJ55gYeCL3e2v+06ZLJrwzkOXPv
 github.com/ElrondNetwork/elrond-vm-common v0.0.8/go.mod h1:VqCCN0cX0e4D/KDc7MGNV9ElrOsfnjuJnGvcODVjzbk=
 github.com/ElrondNetwork/elrond-vm-common v0.0.9 h1:Ff8vEJSKChRfmp+TVo7AgciRkMXjL4+TbNin6LQ7xKw=
 github.com/ElrondNetwork/elrond-vm-common v0.0.9/go.mod h1:VqCCN0cX0e4D/KDc7MGNV9ElrOsfnjuJnGvcODVjzbk=
+github.com/ElrondNetwork/elrond-vm-common v0.1.1 h1:QuTFNlwfhjxqTwKsByt6xPr/FFGt7nR2DoJoxX80s+8=
+github.com/ElrondNetwork/elrond-vm-common v0.1.1/go.mod h1:ZakxPST/Wt8umnRtA9gobcy3Dw2bywxwkC54P5VhO9g=
 github.com/ElrondNetwork/elrond-vm-util v0.0.3/go.mod h1:/gz1QHx7ndQnjQDAEEhpiiaezbyl/woTI6apOsWrN10=
 github.com/ElrondNetwork/go-ext-wasm v0.0.0-20190923181727-2aed5e4238f5 h1:XUFbny/dhk55M2RCLTrwCFjcUUwufPvrejxN3The5Sg=
 github.com/ElrondNetwork/go-ext-wasm v0.0.0-20190923181727-2aed5e4238f5/go.mod h1:+OQYLOaYAxbnkA5WWbiya03JsQng7wg8jKwlJNyQb68=
@@ -436,6 +440,8 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.2.3-0.20181224173747-660f15d67dbb/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
+github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/syndtr/goleveldb v1.0.0/go.mod h1:ZVVdQEZoIme9iO1Ch2Jdy24qqXrMMOU6lpPAyBWyWuQ=
 github.com/syndtr/goleveldb v1.0.1-0.20190318030020-c3a204f8e965 h1:1oFLiOyVl+W7bnBzGhf7BbIv9loSFQcieWWYIjLqcAw=
 github.com/syndtr/goleveldb v1.0.1-0.20190318030020-c3a204f8e965/go.mod h1:9OrXJhf154huy1nPWmuSrkgjPUtUNhA+Zmy+6AESzuA=

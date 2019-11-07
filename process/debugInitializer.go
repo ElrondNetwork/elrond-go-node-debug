@@ -147,11 +147,3 @@ func CreateVMsContainerAndBlockchainHook(accnts state.AccountsAdapter) (process.
 
 	return vmContainer, blockChainHook
 }
-
-func GetIntValueFromSC(accnts state.AccountsAdapter, scAddressBytes []byte, funcName string, args ...[]byte) *big.Int {
-	vmContainer, _ := CreateVMsContainerAndBlockchainHook(accnts)
-	scgd, _ := smartContract.NewSCDataGetter(vmContainer)
-
-	returnedVals, _ := scgd.Get(scAddressBytes, funcName, args...)
-	return big.NewInt(0).SetBytes(returnedVals)
-}

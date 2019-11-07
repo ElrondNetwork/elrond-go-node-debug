@@ -8,8 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
+	"github.com/ElrondNetwork/elrond-go/process/smartContract"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -108,7 +111,22 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 	fmt.Printf("time elapsed to process %d ERC20 transfers %s \n", nrTxs, elapsedTime.String())
 
 	finalAlice := big.NewInt(0).Sub(initAlice, big.NewInt(int64(nrTxs)*transferOnCalls.Int64()))
-	assert.Equal(t, finalAlice.Uint64(), GetIntValueFromSC(accnts, scAddress, "do_balance", alice).Uint64())
+	assert.Equal(t, finalAlice.Uint64(), getBalance(accnts, scAddress, alice).Uint64())
 	finalBob := big.NewInt(int64(nrTxs) * transferOnCalls.Int64())
-	assert.Equal(t, finalBob.Uint64(), GetIntValueFromSC(accnts, scAddress, "do_balance", bob).Uint64())
+	assert.Equal(t, finalBob.Uint64(), getBalance(accnts, scAddress, bob).Uint64())
+}
+
+func getBalance(accnts state.AccountsAdapter, scAddress []byte, accountAddress []byte) *big.Int {
+	vmContainer, _ := CreateVMsContainerAndBlockchainHook(accnts)
+	service, _ := smartContract.NewSCQueryService(vmContainer)
+
+	query := smartContract.SCQuery{
+		ScAddress: scAddress,
+		FuncName:  "do_balance",
+		Arguments: []*big.Int{big.NewInt(0).SetBytes(accountAddress)},
+	}
+
+	vmOutput, _ := service.ExecuteQuery(&query)
+	balance, _ := vmOutput.GetFirstReturnData(vmcommon.AsBigInt)
+	return balance
 }

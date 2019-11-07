@@ -2,27 +2,27 @@ package vmValues
 
 import (
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
 
 	"github.com/ElrondNetwork/elrond-go-node-debug/node"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 
-	apiErrors "github.com/ElrondNetwork/elrond-go/api/errors"
+	"github.com/ElrondNetwork/elrond-go/process/smartContract"
 	"github.com/gin-gonic/gin"
 )
 
 // FacadeHandler interface defines methods that can be used from `elrondFacade` context variable
 type FacadeHandler interface {
-	GetVmValue(address string, funcName string, argsBuff ...[]byte) ([]byte, error)
+	ExecuteSCQuery(query *smartContract.SCQuery) (*vmcommon.VMOutput, error)
 	DeploySmartContract(command node.DeploySmartContractCommand) ([]byte, error)
 	RunSmartContract(command node.RunSmartContractCommand) ([]byte, error)
 	IsInterfaceNil() bool
 }
 
-// VmValueRequest represents the structure on which user input for generating a new transaction will validate against
-type VmValueRequest struct {
+// VMValueRequest represents the structure on which user input for generating a new transaction will validate against
+type VMValueRequest struct {
 	ScAddress string   `form:"scAddress" json:"scAddress"`
 	FuncName  string   `form:"funcName" json:"funcName"`
 	Args      []string `form:"args"  json:"args"`
@@ -55,145 +55,137 @@ type RunSCRequest struct {
 
 // Routes defines address related routes
 func Routes(router *gin.RouterGroup) {
-	router.POST("/hex", GetVmValueAsHexBytes)
-	router.POST("/string", GetVmValueAsString)
-	router.POST("/int", GetVmValueAsBigInt)
-	router.POST("/deploy", DeploySmartContract)
-	router.POST("/run", RunSmartContract)
+	router.POST("/hex", getHex)
+	router.POST("/string", getString)
+	router.POST("/int", getInt)
+	router.POST("/query", executeQuery)
+	router.POST("/deploy", deploySmartContract)
+	router.POST("/run", runSmartContract)
 }
 
-func vmValueFromAccount(c *gin.Context) ([]byte, int, error) {
-	ef, ok := c.MustGet("elrondFacade").(FacadeHandler)
-	if !ok {
-		return nil, http.StatusInternalServerError, apiErrors.ErrInvalidAppContext
-	}
+func getHex(context *gin.Context) {
+	doGetVMValue(context, vmcommon.AsHex)
+}
 
-	var gval = VmValueRequest{}
-	err := c.ShouldBindJSON(&gval)
+func getString(context *gin.Context) {
+	doGetVMValue(context, vmcommon.AsString)
+}
+
+func getInt(context *gin.Context) {
+	doGetVMValue(context, vmcommon.AsBigIntString)
+}
+
+func doGetVMValue(context *gin.Context, asType vmcommon.ReturnDataKind) {
+	vmOutput, err := doExecuteQuery(context)
+
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		returnBadRequest(context, "doGetVMValue", err)
+		return
 	}
 
-	argsBuff := make([][]byte, 0)
-	for _, arg := range gval.Args {
-		buff, err := hex.DecodeString(arg)
+	returnData, err := vmOutput.GetFirstReturnData(asType)
+	if err != nil {
+		returnBadRequest(context, "doGetVMValue", err)
+		return
+	}
+
+	returnOkResponse(context, returnData)
+}
+
+func executeQuery(context *gin.Context) {
+	vmOutput, err := doExecuteQuery(context)
+	if err != nil {
+		returnBadRequest(context, "executeQuery", err)
+		return
+	}
+
+	returnOkResponse(context, vmOutput)
+}
+
+func doExecuteQuery(context *gin.Context) (*vmcommon.VMOutput, error) {
+	facade, _ := context.MustGet("elrondFacade").(FacadeHandler)
+
+	request := VMValueRequest{}
+	err := context.ShouldBindJSON(&request)
+	if err != nil {
+		return nil, err
+	}
+
+	command, err := createSCQuery(&request)
+	if err != nil {
+		return nil, err
+	}
+
+	vmOutput, err := facade.ExecuteSCQuery(command)
+	if err != nil {
+		return nil, err
+	}
+
+	return vmOutput, nil
+}
+
+func createSCQuery(request *VMValueRequest) (*smartContract.SCQuery, error) {
+	decodedAddress, err := hex.DecodeString(request.ScAddress)
+	if err != nil {
+		return nil, fmt.Errorf("'%s' is not a valid hex string: %s", request.ScAddress, err.Error())
+	}
+
+	argumentsAsInt := make([]*big.Int, 0)
+	for _, arg := range request.Args {
+		argBytes, err := hex.DecodeString(arg)
 		if err != nil {
-			return nil,
-				http.StatusBadRequest,
-				errors.New(fmt.Sprintf("'%s' is not a valid hex string: %s", arg, err.Error()))
+			return nil, fmt.Errorf("'%s' is not a valid hex string: %s", arg, err.Error())
 		}
 
-		argsBuff = append(argsBuff, buff)
+		argumentsAsInt = append(argumentsAsInt, big.NewInt(0).SetBytes(argBytes))
 	}
 
-	adrBytes, err := hex.DecodeString(gval.ScAddress)
-	if err != nil {
-		return nil,
-			http.StatusBadRequest,
-			errors.New(fmt.Sprintf("'%s' is not a valid hex string: %s", gval.ScAddress, err.Error()))
-	}
-
-	returnedData, err := ef.GetVmValue(string(adrBytes), gval.FuncName, argsBuff...)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	return returnedData, http.StatusOK, nil
+	return &smartContract.SCQuery{
+		ScAddress: decodedAddress,
+		FuncName:  request.FuncName,
+		Arguments: argumentsAsInt,
+	}, nil
 }
 
-// GetVmValueAsHexBytes returns the data as byte slice
-func GetVmValueAsHexBytes(c *gin.Context) {
-	data, status, err := vmValueFromAccount(c)
+func deploySmartContract(ginContext *gin.Context) {
+	ef, _ := ginContext.MustGet("elrondFacade").(FacadeHandler)
+
+	command, err := createDeployCommand(ginContext)
 	if err != nil {
-		c.JSON(status, gin.H{"error": fmt.Sprintf("get value as hex bytes: %s", err)})
+		returnBadRequest(ginContext, "deploySmartContract - createDeployCommand", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": hex.EncodeToString(data)})
-}
-
-// GetVmValueAsString returns the data as string
-func GetVmValueAsString(c *gin.Context) {
-	data, status, err := vmValueFromAccount(c)
+	scAddress, err := ef.DeploySmartContract(*command)
 	if err != nil {
-		c.JSON(status, gin.H{"error": fmt.Sprintf("get value as string: %s", err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": string(data)})
-}
-
-// GetVmValueAsBigInt returns the data as big int
-func GetVmValueAsBigInt(c *gin.Context) {
-	data, status, err := vmValueFromAccount(c)
-	if err != nil {
-		c.JSON(status, gin.H{"error": fmt.Sprintf("get value as big int: %s", err)})
-		return
-	}
-
-	value := big.NewInt(0).SetBytes(data)
-	c.JSON(http.StatusOK, gin.H{"data": value.String()})
-}
-
-// DeploySmartContract deploys a smart contract.
-// Returns the address of the smart contract.
-func DeploySmartContract(ginContext *gin.Context) {
-	scAddress, status, err := performDeploySmartContract(ginContext)
-
-	if err != nil {
-		ginContext.JSON(status, gin.H{"error": fmt.Sprintf("deploy smart contract: %s", err)})
+		returnBadRequest(ginContext, "deploySmartContract - actual deploy", err)
 		return
 	}
 
 	scAddressEncoded := hex.EncodeToString(scAddress)
-	ginContext.JSON(http.StatusOK, gin.H{"data": scAddressEncoded})
+	returnOkResponse(ginContext, scAddressEncoded)
 }
 
-// RunSmartContract runs a smart contract.
-func RunSmartContract(ginContext *gin.Context) {
-	data, status, err := performRunSmartContract(ginContext)
+func runSmartContract(ginContext *gin.Context) {
+	ef, _ := ginContext.MustGet("elrondFacade").(FacadeHandler)
+
+	command, err := createRunCommand(ginContext)
 	if err != nil {
-		ginContext.JSON(status, gin.H{"error": fmt.Sprintf("run smart contract: %s", err)})
+		returnBadRequest(ginContext, "runSmartContract - createRunCommand", err)
 		return
-	}
-
-	dataEncoded := hex.EncodeToString(data)
-	ginContext.JSON(http.StatusOK, gin.H{"data": dataEncoded})
-}
-
-func performDeploySmartContract(ginContext *gin.Context) ([]byte, int, error) {
-	ef, _ := ginContext.MustGet("elrondFacade").(FacadeHandler)
-
-	command, err := convertRequestToDeployCommand(ginContext)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	returnedData, err := ef.DeploySmartContract(*command)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	return returnedData, http.StatusOK, nil
-}
-
-func performRunSmartContract(ginContext *gin.Context) ([]byte, int, error) {
-	ef, _ := ginContext.MustGet("elrondFacade").(FacadeHandler)
-
-	command, err := convertRequestToRunCommand(ginContext)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
 	}
 
 	returnedData, err := ef.RunSmartContract(*command)
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		returnBadRequest(ginContext, "runSmartContract - actual run", err)
+		return
 	}
 
-	return returnedData, http.StatusOK, nil
+	dataEncoded := hex.EncodeToString(returnedData)
+	returnOkResponse(ginContext, dataEncoded)
 }
 
-func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartContractCommand, error) {
+func createDeployCommand(ginContext *gin.Context) (*node.DeploySmartContractCommand, error) {
 	request := DeploySCRequest{}
 
 	err := ginContext.ShouldBindJSON(&request)
@@ -225,7 +217,7 @@ func convertRequestToDeployCommand(ginContext *gin.Context) (*node.DeploySmartCo
 	return command, nil
 }
 
-func convertRequestToRunCommand(ginContext *gin.Context) (*node.RunSmartContractCommand, error) {
+func createRunCommand(ginContext *gin.Context) (*node.RunSmartContractCommand, error) {
 	request := RunSCRequest{}
 
 	err := ginContext.ShouldBindJSON(&request)
@@ -261,4 +253,13 @@ func convertRequestToRunCommand(ginContext *gin.Context) (*node.RunSmartContract
 	}
 
 	return command, nil
+}
+
+func returnBadRequest(context *gin.Context, errScope string, err error) {
+	message := fmt.Sprintf("%s: %s", errScope, err)
+	context.JSON(http.StatusBadRequest, gin.H{"error": message})
+}
+
+func returnOkResponse(context *gin.Context, data interface{}) {
+	context.JSON(http.StatusOK, gin.H{"data": data})
 }
