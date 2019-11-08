@@ -23,9 +23,11 @@ type FacadeHandler interface {
 
 // VMValueRequest represents the structure on which user input for generating a new transaction will validate against
 type VMValueRequest struct {
-	ScAddress string   `form:"scAddress" json:"scAddress"`
-	FuncName  string   `form:"funcName" json:"funcName"`
-	Args      []string `form:"args"  json:"args"`
+	OnTestnet           bool     `form:"onTestnet" json:"onTestnet"`
+	TestnetNodeEndpoint string   `form:"testnetNodeEndpoint" json:"testnetNodeEndpoint"`
+	ScAddress           string   `form:"scAddress" json:"scAddress"`
+	FuncName            string   `form:"funcName" json:"funcName"`
+	Args                []string `form:"args"  json:"args"`
 }
 
 // DeploySCRequest represents the structure on which user input for generating a new transaction will validate against
