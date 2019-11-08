@@ -1,4 +1,4 @@
-package vmValues
+package core
 
 import (
 	"encoding/hex"
@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/ElrondNetwork/elrond-go-node-debug/node"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
@@ -16,8 +15,8 @@ import (
 // FacadeHandler interface defines methods that can be used from `elrondFacade` context variable
 type FacadeHandler interface {
 	ExecuteSCQuery(query *smartContract.SCQuery) (*vmcommon.VMOutput, error)
-	DeploySmartContract(command node.DeploySmartContractCommand) ([]byte, error)
-	RunSmartContract(command node.RunSmartContractCommand) ([]byte, error)
+	DeploySmartContract(command DeploySmartContractCommand) ([]byte, error)
+	RunSmartContract(command RunSmartContractCommand) ([]byte, error)
 	IsInterfaceNil() bool
 }
 
@@ -187,7 +186,7 @@ func runSmartContract(ginContext *gin.Context) {
 	returnOkResponse(ginContext, dataEncoded)
 }
 
-func createDeployCommand(ginContext *gin.Context) (*node.DeploySmartContractCommand, error) {
+func createDeployCommand(ginContext *gin.Context) (*DeploySmartContractCommand, error) {
 	request := DeploySCRequest{}
 
 	err := ginContext.ShouldBindJSON(&request)
@@ -204,7 +203,7 @@ func createDeployCommand(ginContext *gin.Context) (*node.DeploySmartContractComm
 		return nil, fmt.Errorf("private key is missing")
 	}
 
-	command := &node.DeploySmartContractCommand{
+	command := &DeploySmartContractCommand{
 		OnTestnet:           request.OnTestnet,
 		PrivateKey:          request.PrivateKey,
 		TestnetNodeEndpoint: request.TestnetNodeEndpoint,
@@ -219,7 +218,7 @@ func createDeployCommand(ginContext *gin.Context) (*node.DeploySmartContractComm
 	return command, nil
 }
 
-func createRunCommand(ginContext *gin.Context) (*node.RunSmartContractCommand, error) {
+func createRunCommand(ginContext *gin.Context) (*RunSmartContractCommand, error) {
 	request := RunSCRequest{}
 
 	err := ginContext.ShouldBindJSON(&request)
@@ -241,7 +240,7 @@ func createRunCommand(ginContext *gin.Context) (*node.RunSmartContractCommand, e
 		return nil, fmt.Errorf("private key is missing")
 	}
 
-	command := &node.RunSmartContractCommand{
+	command := &RunSmartContractCommand{
 		OnTestnet:           request.OnTestnet,
 		PrivateKey:          request.PrivateKey,
 		TestnetNodeEndpoint: request.TestnetNodeEndpoint,

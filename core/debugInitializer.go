@@ -1,4 +1,4 @@
-package process
+package core
 
 import (
 	"encoding/hex"

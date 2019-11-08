@@ -10,8 +10,7 @@ import (
 	"sync"
 	"syscall"
 
-	debugVMFacade "github.com/ElrondNetwork/elrond-go-node-debug/facade"
-	debugNode "github.com/ElrondNetwork/elrond-go-node-debug/node"
+	debugCore "github.com/ElrondNetwork/elrond-go-node-debug/core"
 	"github.com/ElrondNetwork/elrond-go/cmd/node/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core"
@@ -154,7 +153,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	processorNode, err := debugNode.NewSimpleDebugNode(accountsAdapter, ctx.GlobalString(genesisFile.Name))
+	processorNode, err := debugCore.NewSimpleDebugNode(accountsAdapter, ctx.GlobalString(genesisFile.Name))
 	if err != nil {
 		return err
 	}
@@ -170,7 +169,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	ef := debugVMFacade.NewDebugVMFacade(apiResolver, processorNode, true)
+	ef := debugCore.NewDebugVMFacade(apiResolver, processorNode, true)
 
 	efConfig := &config.FacadeConfig{
 		RestApiPort: ctx.GlobalString(restApiPort.Name),

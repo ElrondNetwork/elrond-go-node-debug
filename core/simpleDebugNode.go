@@ -1,4 +1,4 @@
-package node
+package core
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"math/big"
 	"net/http"
 
-	debugInit "github.com/ElrondNetwork/elrond-go-node-debug/process"
 	"github.com/ElrondNetwork/elrond-go/crypto"
 	"github.com/ElrondNetwork/elrond-go/crypto/signing"
 	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber"
@@ -100,10 +99,10 @@ func NewSimpleDebugNode(accnts state.AccountsAdapter, genesisFile string) (*Simp
 	}
 
 	for pubKey, value := range mapInValues {
-		_ = debugInit.CreateAccount(node.acnts, []byte(pubKey), 0, value)
+		_ = CreateAccount(node.acnts, []byte(pubKey), 0, value)
 	}
 
-	node.txProcessor, node.blockChainHook = debugInit.CreateTxProcessorWithOneSCExecutorWithVMs(node.acnts)
+	node.txProcessor, node.blockChainHook = CreateTxProcessorWithOneSCExecutorWithVMs(node.acnts)
 
 	return node, nil
 }
@@ -137,7 +136,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 	tx := &transaction.Transaction{
 		Nonce:    nonce,
 		Value:    value,
-		RcvAddr:  debugInit.CreateEmptyAddress().Bytes(),
+		RcvAddr:  CreateEmptyAddress().Bytes(),
 		SndAddr:  publicKey,
 		GasLimit: command.GasLimit,
 		GasPrice: command.GasPrice,
@@ -179,7 +178,7 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 	tx := &transaction.Transaction{
 		Nonce:    account.GetNonce(),
 		Value:    value,
-		RcvAddr:  debugInit.CreateEmptyAddress().Bytes(),
+		RcvAddr:  CreateEmptyAddress().Bytes(),
 		SndAddr:  []byte(command.SndAddress),
 		GasLimit: command.GasLimit,
 		GasPrice: command.GasPrice,

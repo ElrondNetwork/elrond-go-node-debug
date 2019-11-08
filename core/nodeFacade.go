@@ -1,16 +1,14 @@
-package facade
+package core
 
 import (
 	"fmt"
 	"strconv"
 	"sync"
 
-	"github.com/ElrondNetwork/elrond-go-node-debug/node"
 	"github.com/ElrondNetwork/elrond-go/node/heartbeat"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 
-	"github.com/ElrondNetwork/elrond-go-node-debug/api/vmValues"
 	"github.com/ElrondNetwork/elrond-go/api/middleware"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core/logger"
@@ -31,7 +29,7 @@ const DefaultRestPortOff = "off"
 // DebugVMFacade represents a facade for grouping the functionality for node, transaction and address
 type DebugVMFacade struct {
 	apiResolver            baseFacade.ApiResolver
-	debugNode              node.ProcessSmartContract
+	debugNode              ProcessSmartContract
 	syncer                 ntp.SyncTimer
 	log                    *logger.Logger
 	tpsBenchmark           *statistics.TpsBenchmark
@@ -48,7 +46,7 @@ func (ef *DebugVMFacade) GetHeartbeats() ([]heartbeat.PubKeyHeartbeat, error) {
 }
 
 // NewDebugVMFacade creates a new Facade with a NodeWrapper
-func NewDebugVMFacade(apiResolver baseFacade.ApiResolver, debugNode node.ProcessSmartContract, restAPIServerDebugMode bool) *DebugVMFacade {
+func NewDebugVMFacade(apiResolver baseFacade.ApiResolver, debugNode ProcessSmartContract, restAPIServerDebugMode bool) *DebugVMFacade {
 	return &DebugVMFacade{
 		apiResolver:            apiResolver,
 		debugNode:              debugNode,
@@ -157,7 +155,7 @@ func (ef *DebugVMFacade) startRest(wg *sync.WaitGroup) {
 		ws := gin.Default()
 		vmValuesRoutes := ws.Group("/vm-values")
 		vmValuesRoutes.Use(middleware.WithElrondFacade(ef))
-		vmValues.Routes(vmValuesRoutes)
+		Routes(vmValuesRoutes)
 
 		ws.Run(fmt.Sprintf(":%s", port))
 	}
@@ -174,12 +172,12 @@ func (ef *DebugVMFacade) ExecuteSCQuery(query *smartContract.SCQuery) (*vmcommon
 }
 
 // RunSmartContract deploys a smart contract.
-func (ef *DebugVMFacade) DeploySmartContract(command node.DeploySmartContractCommand) ([]byte, error) {
+func (ef *DebugVMFacade) DeploySmartContract(command DeploySmartContractCommand) ([]byte, error) {
 	return ef.debugNode.DeploySmartContract(command)
 }
 
 // RunSmartContract runs a smart contract function.
-func (ef *DebugVMFacade) RunSmartContract(command node.RunSmartContractCommand) ([]byte, error) {
+func (ef *DebugVMFacade) RunSmartContract(command RunSmartContractCommand) ([]byte, error) {
 	return ef.debugNode.RunSmartContract(command)
 }
 
