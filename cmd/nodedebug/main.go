@@ -169,7 +169,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	ef := debugCore.NewDebugVMFacade(apiResolver, processorNode, true)
+	ef := debugCore.NewNodeDebugFacade(apiResolver, processorNode, true)
 
 	efConfig := &config.FacadeConfig{
 		RestApiPort: ctx.GlobalString(restApiPort.Name),
