@@ -24,7 +24,7 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 	gasLimit := uint64(100000)
 	transferOnCalls := big.NewInt(5)
 
-	scCode, err := ioutil.ReadFile("./wrc20_arwen.wasm")
+	scCode, err := ioutil.ReadFile("./testdata/wrc20_arwen.wasm")
 	assert.Nil(t, err)
 
 	scCodeString := hex.EncodeToString(scCode)
