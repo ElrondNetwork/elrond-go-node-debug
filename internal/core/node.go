@@ -58,10 +58,3 @@ func NewSimpleDebugNode(accnts state.AccountsAdapter, genesisFile string) (*Simp
 }
 
 const defaultRound uint64 = 444
-
-func (node *SimpleDebugNode) IsInterfaceNil() bool {
-	if node == nil {
-		return true
-	}
-	return false
-}
