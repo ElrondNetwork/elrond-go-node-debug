@@ -12,7 +12,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
-	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -127,6 +126,6 @@ func getBalance(accnts state.AccountsAdapter, scAddress []byte, accountAddress [
 	}
 
 	vmOutput, _ := service.ExecuteQuery(&query)
-	balance, _ := vmOutput.GetFirstReturnData(vmcommon.AsBigInt)
+	balance := vmOutput.ReturnData[0]
 	return balance
 }
