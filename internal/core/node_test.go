@@ -10,8 +10,17 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
+	"github.com/ElrondNetwork/elrond-go/data/trie"
+	"github.com/ElrondNetwork/elrond-go/marshal"
+	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
+	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
+	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
+	"github.com/ElrondNetwork/elrond-go/storage"
+	"github.com/ElrondNetwork/elrond-go/storage/memorydb"
+	"github.com/ElrondNetwork/elrond-go/storage/storageUnit"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +50,7 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 		Challenge: nil,
 	}
 
-	txProc, accnts, blockchainHook := CreatePreparedTxProcessorAndAccountsWithVMs(ownerNonce, ownerAddressBytes, ownerBalance)
+	txProc, accnts, blockchainHook := createPreparedTxProcessorAndAccountsWithVMs(ownerNonce, ownerAddressBytes, ownerBalance)
 
 	err = txProc.ProcessTransaction(tx, round)
 	assert.Nil(t, err)
@@ -115,8 +124,45 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 	assert.Equal(t, finalBob.Uint64(), getBalance(accnts, scAddress, bob).Uint64())
 }
 
+func createVMsContainerAndBlockchainHook(accnts state.AccountsAdapter) (process.VirtualMachinesContainer, *hooks.VMAccountsDB) {
+	blockChainHook, _ := hooks.NewVMAccountsDB(accnts, addrConv)
+
+	vmFactory, _ := shard.NewVMContainerFactory(accnts, addrConv)
+	vmContainer, _ := vmFactory.Create()
+
+	return vmContainer, blockChainHook
+}
+
+func createPreparedTxProcessorAndAccountsWithVMs(senderNonce uint64, senderAddressBytes []byte, senderBalance *big.Int) (process.TransactionProcessor, state.AccountsAdapter, vmcommon.BlockchainHook) {
+
+	accnts := createInMemoryShardAccountsDB()
+	_ = CreateAccount(accnts, senderAddressBytes, senderNonce, senderBalance)
+
+	txProcessor, blockchainHook := CreateTxProcessorWithOneSCExecutorWithVMs(accnts)
+
+	return txProcessor, accnts, blockchainHook
+}
+
+func createInMemoryShardAccountsDB() *state.AccountsDB {
+	marshalizer := &marshal.JsonMarshalizer{}
+	store := createMemUnit()
+
+	tr, _ := trie.NewTrie(store, marshalizer, hasher)
+	adb, _ := state.NewAccountsDB(tr, hasher, marshalizer, &accountFactory{})
+
+	return adb
+}
+
+func createMemUnit() storage.Storer {
+	cache, _ := storageUnit.NewCache(storageUnit.LRUCache, 10, 1)
+	persist, _ := memorydb.New()
+
+	unit, _ := storageUnit.NewStorageUnit(cache, persist)
+	return unit
+}
+
 func getBalance(accnts state.AccountsAdapter, scAddress []byte, accountAddress []byte) *big.Int {
-	vmContainer, _ := CreateVMsContainerAndBlockchainHook(accnts)
+	vmContainer, _ := createVMsContainerAndBlockchainHook(accnts)
 	service, _ := smartContract.NewSCQueryService(vmContainer)
 
 	query := smartContract.SCQuery{
