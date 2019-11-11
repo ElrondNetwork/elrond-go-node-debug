@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,8 +12,6 @@ import (
 	"net/http"
 
 	"github.com/ElrondNetwork/elrond-go/crypto"
-	"github.com/ElrondNetwork/elrond-go/crypto/signing"
-	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber"
 	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber/singlesig"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
@@ -161,21 +158,6 @@ func sendTransaction(nodeAPIUrl string, txBuff []byte) error {
 	structuredResponse := sendTransactionResponse{}
 	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&structuredResponse)
 	return err
-}
-
-func readPrivateKeyFromPemText(pemText string) (crypto.PrivateKey, error) {
-	suite := kyber.NewBlakeSHA256Ed25519()
-	keyGenerator := signing.NewKeyGenerator(suite)
-	keyBlock, _ := pem.Decode([]byte(pemText))
-	keyBytes := keyBlock.Bytes
-
-	keyBytesDecoded, err := hex.DecodeString(string(keyBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	privateKey, err := keyGenerator.PrivateKeyFromByteArray(keyBytesDecoded)
-	return privateKey, err
 }
 
 type jsonFriendlyTransaction struct {
