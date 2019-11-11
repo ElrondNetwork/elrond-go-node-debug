@@ -16,3 +16,5 @@
 bin/
 # or
 */bin/*
+
+internal/core/trace/*
