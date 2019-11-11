@@ -29,7 +29,7 @@ const DefaultRestPortOff = "off"
 // DebugVMFacade represents a facade for grouping the functionality for node, transaction and address
 type DebugVMFacade struct {
 	apiResolver            baseFacade.ApiResolver
-	debugNode              ProcessSmartContract
+	debugNode              *SimpleDebugNode
 	syncer                 ntp.SyncTimer
 	log                    *logger.Logger
 	tpsBenchmark           *statistics.TpsBenchmark
@@ -46,7 +46,7 @@ func (ef *DebugVMFacade) GetHeartbeats() ([]heartbeat.PubKeyHeartbeat, error) {
 }
 
 // NewDebugVMFacade creates a new Facade with a NodeWrapper
-func NewDebugVMFacade(apiResolver baseFacade.ApiResolver, debugNode ProcessSmartContract, restAPIServerDebugMode bool) *DebugVMFacade {
+func NewDebugVMFacade(apiResolver baseFacade.ApiResolver, debugNode *SimpleDebugNode, restAPIServerDebugMode bool) *DebugVMFacade {
 	return &DebugVMFacade{
 		apiResolver:            apiResolver,
 		debugNode:              debugNode,

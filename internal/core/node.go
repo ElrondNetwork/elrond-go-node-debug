@@ -10,13 +10,6 @@ import (
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 )
 
-// ProcessSmartContract is the interface that holds functions for processing smart contracts.
-type ProcessSmartContract interface {
-	DeploySmartContract(command DeploySmartContractCommand) ([]byte, error)
-	RunSmartContract(command RunSmartContractCommand) ([]byte, error)
-	IsInterfaceNil() bool
-}
-
 type SimpleDebugNode struct {
 	acnts          state.AccountsAdapter
 	txProcessor    process.TransactionProcessor
