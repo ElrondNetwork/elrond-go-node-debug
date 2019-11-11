@@ -155,7 +155,7 @@ func (ef *DebugVMFacade) startRest(wg *sync.WaitGroup) {
 		ws := gin.Default()
 		vmValuesRoutes := ws.Group("/vm-values")
 		vmValuesRoutes.Use(middleware.WithElrondFacade(ef))
-		Routes(vmValuesRoutes)
+		RegisterRoutes(vmValuesRoutes)
 
 		ws.Run(fmt.Sprintf(":%s", port))
 	}
