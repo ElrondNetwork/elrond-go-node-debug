@@ -10,7 +10,7 @@ import (
 	"sync"
 	"syscall"
 
-	debugCore "github.com/ElrondNetwork/elrond-go-node-debug/core"
+	debugCore "github.com/ElrondNetwork/elrond-go-node-debug/internal/core"
 	"github.com/ElrondNetwork/elrond-go/cmd/node/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core"
