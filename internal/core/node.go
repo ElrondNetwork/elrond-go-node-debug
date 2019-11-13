@@ -4,8 +4,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 
+	arwenConfig "github.com/ElrondNetwork/arwen-wasm-vm/config"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 	"github.com/ElrondNetwork/elrond-go/hashing/sha256"
@@ -22,52 +24,45 @@ import (
 
 var marshalizer = &marshal.JsonMarshalizer{}
 var hasher = sha256.Sha256{}
-var oneShardCoordinator = mock.NewMultiShardsCoordinatorMock(1)
-var addrConv, _ = addressConverters.NewPlainAddressConverter(32, "0x")
+var shardCoordinator, _ = sharding.NewMultiShardCoordinator(1, 0)
+var addressConverter, _ = addressConverters.NewPlainAddressConverter(32, "0x")
+var GasMap = arwenConfig.MakeGasMap(1)
 
 type SimpleDebugNode struct {
-	acnts          state.AccountsAdapter
-	txProcessor    process.TransactionProcessor
-	blockChainHook vmcommon.BlockchainHook
-	addrConverter  state.AddressConverter
+	Accounts         state.AccountsAdapter
+	TxProcessor      process.TransactionProcessor
+	BlockChainHook   vmcommon.BlockchainHook
+	AddressConverter state.AddressConverter
 }
 
-func NewSimpleDebugNode(accnts state.AccountsAdapter, genesisFile string) (*SimpleDebugNode, error) {
+func NewSimpleDebugNode(accounts state.AccountsAdapter, genesisFile string) (*SimpleDebugNode, error) {
 	genesisConfig, err := sharding.NewGenesisConfig(genesisFile)
 	if err != nil {
 		return nil, err
 	}
 
-	if accnts == nil || accnts.IsInterfaceNil() {
+	if accounts == nil || accounts.IsInterfaceNil() {
 		return nil, errors.New("nil accounts adapter")
 	}
 
 	node := &SimpleDebugNode{
-		acnts:          accnts,
-		txProcessor:    nil,
-		blockChainHook: nil,
+		Accounts:       accounts,
+		TxProcessor:    nil,
+		BlockChainHook: nil,
 	}
 
-	shardC, err := sharding.NewMultiShardCoordinator(1, 0)
-	if err != nil {
-		return nil, err
-	}
+	node.AddressConverter = addressConverter
 
-	node.addrConverter, err = addressConverters.NewPlainAddressConverter(32, "0x")
-	if err != nil {
-		return nil, err
-	}
-
-	mapInValues, err := genesisConfig.InitialNodesBalances(shardC, node.addrConverter)
+	mapInValues, err := genesisConfig.InitialNodesBalances(shardCoordinator, node.AddressConverter)
 	if err != nil {
 		return nil, err
 	}
 
 	for pubKey, value := range mapInValues {
-		_ = CreateAccount(node.acnts, []byte(pubKey), 0, value)
+		_ = CreateAccount(node.Accounts, []byte(pubKey), 0, value)
 	}
 
-	node.txProcessor, node.blockChainHook = CreateTxProcessorWithOneSCExecutorWithVMs(node.acnts)
+	node.TxProcessor, node.BlockChainHook = CreateTxProcessorWithOneSCExecutorWithVMs(node.Accounts)
 
 	return node, nil
 }
@@ -75,8 +70,7 @@ func NewSimpleDebugNode(accnts state.AccountsAdapter, genesisFile string) (*Simp
 const defaultRound uint64 = 444
 
 func CreateTxProcessorWithOneSCExecutorWithVMs(accnts state.AccountsAdapter) (process.TransactionProcessor, vmcommon.BlockchainHook) {
-
-	vmFactory, _ := shard.NewVMContainerFactory(accnts, addrConv)
+	vmFactory, _ := shard.NewVMContainerFactory(accnts, addressConverter, math.MaxUint64, GasMap)
 	vmContainer, _ := vmFactory.Create()
 
 	argsParser, _ := smartContract.NewAtArgumentParser()
@@ -87,20 +81,20 @@ func CreateTxProcessorWithOneSCExecutorWithVMs(accnts state.AccountsAdapter) (pr
 		marshalizer,
 		accnts,
 		vmFactory.VMAccountsDB(),
-		addrConv,
-		oneShardCoordinator,
+		addressConverter,
+		shardCoordinator,
 		&mock.IntermediateTransactionHandlerMock{},
 		&MyTransactionFeeHandlerStub{},
 	)
 
-	txTypeHandler, _ := coordinator.NewTxTypeHandler(addrConv, oneShardCoordinator, accnts)
+	txTypeHandler, _ := coordinator.NewTxTypeHandler(addressConverter, shardCoordinator, accnts)
 
 	txProcessor, _ := transaction.NewTxProcessor(
 		accnts,
 		hasher,
-		addrConv,
+		addressConverter,
 		marshalizer,
-		oneShardCoordinator,
+		shardCoordinator,
 		scProcessor,
 		&MyTransactionFeeHandlerStub{},
 		txTypeHandler,
@@ -134,7 +128,7 @@ func CreateEmptyAddress() state.AddressContainer {
 func CreateAccount(accnts state.AccountsAdapter, pubKey []byte, nonce uint64, balance *big.Int) []byte {
 	fmt.Printf("CreateAccount %s, balance = %s\n", hex.EncodeToString(pubKey), balance.String())
 
-	address, _ := addrConv.CreateAddressFromPublicKeyBytes(pubKey)
+	address, _ := addressConverter.CreateAddressFromPublicKeyBytes(pubKey)
 	account, _ := accnts.GetAccountWithJournal(address)
 	_ = account.(*state.Account).SetNonceWithJournal(nonce)
 	_ = account.(*state.Account).SetBalanceWithJournal(balance)

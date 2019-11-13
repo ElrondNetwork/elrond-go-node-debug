@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -18,7 +19,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 	factoryState "github.com/ElrondNetwork/elrond-go/data/state/factory"
-	"github.com/ElrondNetwork/elrond-go/facade"
 	"github.com/ElrondNetwork/elrond-go/node/external"
 	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
@@ -159,13 +159,24 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 	}
 
 	statusMetrics := statusHandler.NewStatusMetrics()
-	apiResolver, err := createApiResolver(
-		accountsAdapter,
-		addressConverter,
-		statusMetrics,
-	)
+
+	vmFactory, err := shard.NewVMContainerFactory(accountsAdapter, addressConverter, math.MaxUint64, debugCore.GasMap)
 	if err != nil {
-		fmt.Println("error instantiating api resolver " + err.Error())
+		return err
+	}
+
+	vmContainer, err := vmFactory.Create()
+	if err != nil {
+		return err
+	}
+
+	scQueryService, err := smartContract.NewSCQueryService(vmContainer)
+	if err != nil {
+		return err
+	}
+
+	apiResolver, err := external.NewNodeApiResolver(scQueryService, statusMetrics)
+	if err != nil {
 		return err
 	}
 
@@ -199,25 +210,6 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 	<-stop
 
 	return nil
-}
-
-func createApiResolver(accounts state.AccountsAdapter, converter state.AddressConverter, statusMetrics external.StatusMetricsHandler) (facade.ApiResolver, error) {
-	vmFactory, err := shard.NewVMContainerFactory(accounts, converter)
-	if err != nil {
-		return nil, err
-	}
-
-	vmContainer, err := vmFactory.Create()
-	if err != nil {
-		return nil, err
-	}
-
-	scDataGetter, err := smartContract.NewSCQueryService(vmContainer)
-	if err != nil {
-		return nil, err
-	}
-
-	return external.NewNodeApiResolver(scDataGetter, statusMetrics)
 }
 
 func loadMainConfig(filepath string, log *logger.Logger) (*config.Config, error) {

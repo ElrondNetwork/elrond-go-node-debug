@@ -121,7 +121,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		Data:     command.TxData,
 	}
 
-	resultingAddress, err := node.blockChainHook.NewAddress(publicKey, nonce, factory.ArwenVirtualMachine)
+	resultingAddress, err := node.BlockChainHook.NewAddress(publicKey, nonce, factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
@@ -132,17 +132,17 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 }
 
 func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartContractCommand) ([]byte, error) {
-	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
+	accAddress, err := node.AddressConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := node.acnts.GetAccountWithJournal(accAddress)
+	account, err := node.Accounts.GetAccountWithJournal(accAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	resultingAddress, err := node.blockChainHook.NewAddress(command.SndAddress, account.GetNonce(), factory.ArwenVirtualMachine)
+	resultingAddress, err := node.BlockChainHook.NewAddress(command.SndAddress, account.GetNonce(), factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
@@ -163,12 +163,12 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 		Data:     command.TxData,
 	}
 
-	err = node.txProcessor.ProcessTransaction(tx, defaultRound)
+	err = node.TxProcessor.ProcessTransaction(tx, defaultRound)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = node.acnts.Commit()
+	_, err = node.Accounts.Commit()
 	if err != nil {
 		return nil, err
 	}

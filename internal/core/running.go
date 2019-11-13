@@ -135,12 +135,12 @@ func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractC
 }
 
 func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContractCommand) ([]byte, error) {
-	accAddress, err := node.addrConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
+	accAddress, err := node.AddressConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
 		return nil, err
 	}
 
-	account, err := node.acnts.GetAccountWithJournal(accAddress)
+	account, err := node.Accounts.GetAccountWithJournal(accAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -175,10 +175,10 @@ func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContrac
 		Challenge: nil,
 	}
 
-	err = node.txProcessor.ProcessTransaction(tx, defaultRound)
+	err = node.TxProcessor.ProcessTransaction(tx, defaultRound)
 	if err != nil {
 		return nil, err
 	}
 
-	return node.acnts.Commit()
+	return node.Accounts.Commit()
 }

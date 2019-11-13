@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"math/big"
 	"testing"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
 	"github.com/ElrondNetwork/elrond-go/storage"
 	"github.com/ElrondNetwork/elrond-go/storage/memorydb"
 	"github.com/ElrondNetwork/elrond-go/storage/storageUnit"
@@ -124,15 +124,6 @@ func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
 	assert.Equal(t, finalBob.Uint64(), getBalance(accnts, scAddress, bob).Uint64())
 }
 
-func createVMsContainerAndBlockchainHook(accnts state.AccountsAdapter) (process.VirtualMachinesContainer, *hooks.VMAccountsDB) {
-	blockChainHook, _ := hooks.NewVMAccountsDB(accnts, addrConv)
-
-	vmFactory, _ := shard.NewVMContainerFactory(accnts, addrConv)
-	vmContainer, _ := vmFactory.Create()
-
-	return vmContainer, blockChainHook
-}
-
 func createPreparedTxProcessorAndAccountsWithVMs(senderNonce uint64, senderAddressBytes []byte, senderBalance *big.Int) (process.TransactionProcessor, state.AccountsAdapter, vmcommon.BlockchainHook) {
 
 	accnts := createInMemoryShardAccountsDB()
@@ -162,7 +153,9 @@ func createMemUnit() storage.Storer {
 }
 
 func getBalance(accnts state.AccountsAdapter, scAddress []byte, accountAddress []byte) *big.Int {
-	vmContainer, _ := createVMsContainerAndBlockchainHook(accnts)
+	vmFactory, _ := shard.NewVMContainerFactory(accnts, addressConverter, math.MaxInt64, GasMap)
+	vmContainer, _ := vmFactory.Create()
+
 	service, _ := smartContract.NewSCQueryService(vmContainer)
 
 	query := smartContract.SCQuery{
