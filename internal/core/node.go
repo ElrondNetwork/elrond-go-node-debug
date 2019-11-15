@@ -48,7 +48,60 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		AddressConverter: addressConverter,
 	}
 
-	node.TxProcessor, node.BlockChainHook = CreateTxProcessorWithOneSCExecutorWithVMs(node.Accounts)
+	vmFactory, err := shard.NewVMContainerFactory(accounts, addressConverter, math.MaxUint64, GasMap)
+	if err != nil {
+		return nil, err
+	}
+
+	vmContainer, err := vmFactory.Create()
+	if err != nil {
+		return nil, err
+	}
+
+	argsParser, err := smartContract.NewAtArgumentParser()
+	if err != nil {
+		return nil, err
+	}
+
+	scProcessor, err := smartContract.NewSmartContractProcessor(
+		vmContainer,
+		argsParser,
+		hasher,
+		marshalizer,
+		accounts,
+		vmFactory.VMAccountsDB(),
+		addressConverter,
+		shardCoordinator,
+		&mock.IntermediateTransactionHandlerMock{},
+		&MyTransactionFeeHandlerStub{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	txTypeHandler, err := coordinator.NewTxTypeHandler(addressConverter, shardCoordinator, accounts)
+	if err != nil {
+		return nil, err
+	}
+
+	txProcessor, err := transaction.NewTxProcessor(
+		accounts,
+		hasher,
+		addressConverter,
+		marshalizer,
+		shardCoordinator,
+		scProcessor,
+		&MyTransactionFeeHandlerStub{},
+		txTypeHandler,
+		&MyFeeHandlerStub{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	node.VMContainer = vmContainer
+	node.TxProcessor = txProcessor
+	node.BlockChainHook = vmFactory.VMAccountsDB()
 
 	return node, nil
 }
@@ -72,41 +125,6 @@ func (node *SimpleDebugNode) AddAccountsAccordingToGenesisFile(genesisFile strin
 }
 
 const DefaultRound uint64 = 444
-
-func CreateTxProcessorWithOneSCExecutorWithVMs(accnts state.AccountsAdapter) (process.TransactionProcessor, vmcommon.BlockchainHook) {
-	vmFactory, _ := shard.NewVMContainerFactory(accnts, addressConverter, math.MaxUint64, GasMap)
-	vmContainer, _ := vmFactory.Create()
-
-	argsParser, _ := smartContract.NewAtArgumentParser()
-	scProcessor, _ := smartContract.NewSmartContractProcessor(
-		vmContainer,
-		argsParser,
-		hasher,
-		marshalizer,
-		accnts,
-		vmFactory.VMAccountsDB(),
-		addressConverter,
-		shardCoordinator,
-		&mock.IntermediateTransactionHandlerMock{},
-		&MyTransactionFeeHandlerStub{},
-	)
-
-	txTypeHandler, _ := coordinator.NewTxTypeHandler(addressConverter, shardCoordinator, accnts)
-
-	txProcessor, _ := transaction.NewTxProcessor(
-		accnts,
-		hasher,
-		addressConverter,
-		marshalizer,
-		shardCoordinator,
-		scProcessor,
-		&MyTransactionFeeHandlerStub{},
-		txTypeHandler,
-		&MyFeeHandlerStub{},
-	)
-
-	return txProcessor, vmFactory.VMAccountsDB()
-}
 
 type accountFactory struct {
 }

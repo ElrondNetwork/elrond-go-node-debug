@@ -39,7 +39,8 @@ func TestER20_C_Old(t *testing.T) {
 	_ = CreateAccount(accounts, aliceAddress, aliceNonce, big.NewInt(1000000))
 	_ = CreateAccount(accounts, bobAddress, bobNonce, big.NewInt(1000000))
 
-	txProc, blockchainHook := CreateTxProcessorWithOneSCExecutorWithVMs(accounts)
+	node, err := NewSimpleDebugNode(accounts)
+	assert.Nil(t, err)
 
 	smartContractCode := getSmartContractCode("wrc20_arwen_c_old.wasm")
 
@@ -55,13 +56,13 @@ func TestER20_C_Old(t *testing.T) {
 		Challenge: nil,
 	}
 
-	err := txProc.ProcessTransaction(tx, round)
+	err = node.TxProcessor.ProcessTransaction(tx, round)
 	assert.Nil(t, err)
 
 	_, err = accounts.Commit()
 	assert.Nil(t, err)
 
-	scAddress, _ := blockchainHook.NewAddress(ownerAddress, ownerNonce, factory.ArwenVirtualMachine)
+	scAddress, _ := node.BlockChainHook.NewAddress(ownerAddress, ownerNonce, factory.ArwenVirtualMachine)
 
 	tx = &transaction.Transaction{
 		Nonce:    aliceNonce,
@@ -73,7 +74,7 @@ func TestER20_C_Old(t *testing.T) {
 		Data:     "topUp",
 	}
 
-	err = txProc.ProcessTransaction(tx, round)
+	err = node.TxProcessor.ProcessTransaction(tx, round)
 	assert.Nil(t, err)
 
 	_, err = accounts.Commit()
@@ -84,7 +85,7 @@ func TestER20_C_Old(t *testing.T) {
 	nrTxs := 10
 
 	for i := 0; i < nrTxs; i++ {
-		transferToken(txProc, scAddress, "transfer", aliceAddress, &aliceNonce, bobAddress, 5)
+		transferToken(node.TxProcessor, scAddress, "transfer", aliceAddress, &aliceNonce, bobAddress, 5)
 	}
 
 	_, err = accounts.Commit()

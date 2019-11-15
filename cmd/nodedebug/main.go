@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -17,10 +16,8 @@ import (
 	"github.com/ElrondNetwork/elrond-go/core"
 	"github.com/ElrondNetwork/elrond-go/core/logger"
 	"github.com/ElrondNetwork/elrond-go/data/state"
-	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 	factoryState "github.com/ElrondNetwork/elrond-go/data/state/factory"
 	"github.com/ElrondNetwork/elrond-go/node/external"
-	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
 	"github.com/ElrondNetwork/elrond-go/statusHandler"
 	"github.com/urfave/cli"
@@ -135,12 +132,6 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	addressConverter, err := addressConverters.NewPlainAddressConverter(generalConfig.Address.Length, generalConfig.Address.Prefix)
-	if err != nil {
-		fmt.Println("could not create address converter: " + err.Error())
-		return err
-	}
-
 	accountFactory, err := factoryState.NewAccountFactoryCreator(factoryState.UserAccount)
 	if err != nil {
 		fmt.Println("could not create account factory: " + err.Error())
@@ -162,17 +153,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 
 	statusMetrics := statusHandler.NewStatusMetrics()
 
-	vmFactory, err := shard.NewVMContainerFactory(accountsAdapter, addressConverter, math.MaxUint64, debugCore.GasMap)
-	if err != nil {
-		return err
-	}
-
-	vmContainer, err := vmFactory.Create()
-	if err != nil {
-		return err
-	}
-
-	scQueryService, err := smartContract.NewSCQueryService(vmContainer)
+	scQueryService, err := smartContract.NewSCQueryService(simpleDebugNode.VMContainer)
 	if err != nil {
 		return err
 	}
