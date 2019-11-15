@@ -22,33 +22,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type testContext struct {
+	OwnerAddress []byte
+	OwnerNonce   uint64
+	OwnerBalance *big.Int
+	AliceAddress []byte
+	AliceNonce   uint64
+	AliceBalance *big.Int
+	BobAddress   []byte
+	BobNonce     uint64
+	BobBalance   *big.Int
+	Accounts     *state.AccountsDB
+	Node         *SimpleDebugNode
+}
+
 func TestER20_C_Old(t *testing.T) {
-	ownerNonce := uint64(1)
-	ownerAddress := []byte("12345678901234567890123456789012")
-	ownerBalance := big.NewInt(100000000)
-	aliceAddress := []byte("12345678901234567890123456789111")
-	aliceNonce := uint64(1)
-	aliceInit := big.NewInt(100000)
-	bobAddress := []byte("12345678901234567890123456789222")
-	bobNonce := uint64(1)
-	round := uint64(444)
+	context := setupTestContext(t)
 	transferOnCalls := big.NewInt(5)
-
-	accounts := createInMemoryShardAccountsDB()
-	_ = CreateAccount(accounts, ownerAddress, ownerNonce, ownerBalance)
-	_ = CreateAccount(accounts, aliceAddress, aliceNonce, big.NewInt(1000000))
-	_ = CreateAccount(accounts, bobAddress, bobNonce, big.NewInt(1000000))
-
-	node, err := NewSimpleDebugNode(accounts)
-	assert.Nil(t, err)
-
+	aliceInit := big.NewInt(100000)
 	smartContractCode := getSmartContractCode("wrc20_arwen_c_old.wasm")
 
 	tx := &transaction.Transaction{
-		Nonce:     ownerNonce,
+		Nonce:     context.OwnerNonce,
 		Value:     big.NewInt(0),
 		RcvAddr:   CreateEmptyAddress().Bytes(),
-		SndAddr:   ownerAddress,
+		SndAddr:   context.OwnerAddress,
 		GasPrice:  1,
 		GasLimit:  500000,
 		Data:      smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
@@ -56,45 +54,76 @@ func TestER20_C_Old(t *testing.T) {
 		Challenge: nil,
 	}
 
-	err = node.TxProcessor.ProcessTransaction(tx, round)
+	err := context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
 	assert.Nil(t, err)
 
-	_, err = accounts.Commit()
+	_, err = context.Accounts.Commit()
 	assert.Nil(t, err)
 
-	scAddress, _ := node.BlockChainHook.NewAddress(ownerAddress, ownerNonce, factory.ArwenVirtualMachine)
+	scAddress, _ := context.Node.BlockChainHook.NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
 
 	tx = &transaction.Transaction{
-		Nonce:    aliceNonce,
+		Nonce:    context.AliceNonce,
 		Value:    aliceInit,
 		RcvAddr:  scAddress,
-		SndAddr:  aliceAddress,
+		SndAddr:  context.AliceAddress,
 		GasPrice: 1,
 		GasLimit: 500000,
 		Data:     "topUp",
 	}
 
-	err = node.TxProcessor.ProcessTransaction(tx, round)
+	err = context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
 	assert.Nil(t, err)
 
-	_, err = accounts.Commit()
+	_, err = context.Accounts.Commit()
 	assert.Nil(t, err)
 
-	aliceNonce++
+	context.AliceNonce++
 
 	nrTxs := 10
 
 	for i := 0; i < nrTxs; i++ {
-		transferToken(node.TxProcessor, scAddress, "transfer", aliceAddress, &aliceNonce, bobAddress, 5)
+		transferToken(context.Node.TxProcessor, scAddress, "transfer", context.AliceAddress, &context.AliceNonce, context.BobAddress, 5)
 	}
 
-	_, err = accounts.Commit()
+	_, err = context.Accounts.Commit()
 	assert.Nil(t, err)
 
 	finalAlice := big.NewInt(0).Sub(aliceInit, big.NewInt(int64(nrTxs)*transferOnCalls.Int64()))
-	assert.Equal(t, finalAlice.Uint64(), getBalance(accounts, scAddress, aliceAddress).Uint64())
+	assert.Equal(t, finalAlice.Uint64(), getBalance(context.Accounts, scAddress, context.AliceAddress).Uint64())
 	finalBob := big.NewInt(int64(nrTxs) * transferOnCalls.Int64())
-	assert.Equal(t, finalBob.Uint64(), getBalance(accounts, scAddress, bobAddress).Uint64())
+	assert.Equal(t, finalBob.Uint64(), getBalance(context.Accounts, scAddress, context.BobAddress).Uint64())
+}
+
+func TestER20_C_New(t *testing.T) {
+
+}
+
+func setupTestContext(t *testing.T) testContext {
+	context := testContext{}
+
+	context.OwnerAddress = []byte("12345678901234567890123456789012")
+	context.OwnerNonce = uint64(1)
+	context.OwnerBalance = big.NewInt(100000000)
+	context.AliceAddress = []byte("12345678901234567890123456789111")
+	context.AliceNonce = uint64(1)
+	context.AliceBalance = big.NewInt(1000000)
+	context.BobAddress = []byte("12345678901234567890123456789222")
+	context.BobNonce = uint64(1)
+	context.BobBalance = big.NewInt(1000000)
+
+	accounts := createInMemoryShardAccountsDB()
+	_ = CreateAccount(accounts, context.OwnerAddress, context.OwnerNonce, context.OwnerBalance)
+	_ = CreateAccount(accounts, context.AliceAddress, context.AliceNonce, context.AliceBalance)
+	_ = CreateAccount(accounts, context.BobAddress, context.BobNonce, context.BobBalance)
+
+	node, err := NewSimpleDebugNode(accounts)
+	assert.Nil(t, err)
+
+	context.Accounts = accounts
+	context.Node = node
+
+	return context
 }
 
 func getSmartContractCode(fileName string) string {
