@@ -11,7 +11,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/data/trie"
 	"github.com/ElrondNetwork/elrond-go/marshal"
-	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
 	"github.com/ElrondNetwork/elrond-go/storage"
@@ -81,7 +80,7 @@ func TestER20_C_Old(t *testing.T) {
 	nrTxs := 10
 
 	for i := 0; i < nrTxs; i++ {
-		transferToken(context.Node.TxProcessor, scAddress, "transfer", context.AliceAddress, &context.AliceNonce, context.BobAddress, 5)
+		transferToken(&context, scAddress, "transfer", context.AliceAddress, &context.AliceNonce, context.BobAddress, 5)
 	}
 
 	_, err = context.Accounts.Commit()
@@ -130,7 +129,7 @@ func getSmartContractCode(fileName string) string {
 	return codeEncoded
 }
 
-func transferToken(processor process.TransactionProcessor, scAddress []byte, transferFunctionName string, from []byte, fromNonce *uint64, to []byte, amount uint64) error {
+func transferToken(context *testContext, scAddress []byte, transferFunctionName string, from []byte, fromNonce *uint64, to []byte, amount uint64) error {
 	txData := transferFunctionName + "@" + hex.EncodeToString(to) + "@" + strconv.FormatUint(amount, 16)
 
 	tx := &transaction.Transaction{
@@ -143,7 +142,7 @@ func transferToken(processor process.TransactionProcessor, scAddress []byte, tra
 		Data:     txData,
 	}
 
-	err := processor.ProcessTransaction(tx, 444)
+	err := context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
 	*fromNonce++
 	return err
 }
