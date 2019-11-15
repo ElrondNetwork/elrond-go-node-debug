@@ -153,10 +153,12 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	processorNode, err := debugCore.NewSimpleDebugNode(accountsAdapter, ctx.GlobalString(genesisFile.Name))
+	simpleDebugNode, err := debugCore.NewSimpleDebugNode(accountsAdapter)
 	if err != nil {
 		return err
 	}
+
+	simpleDebugNode.AddAccountsAccordingToGenesisFile(ctx.GlobalString(genesisFile.Name))
 
 	statusMetrics := statusHandler.NewStatusMetrics()
 
@@ -180,7 +182,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		return err
 	}
 
-	ef := debugCore.NewNodeDebugFacade(apiResolver, processorNode, true)
+	ef := debugCore.NewNodeDebugFacade(apiResolver, simpleDebugNode, true)
 
 	efConfig := &config.FacadeConfig{
 		RestApiPort: ctx.GlobalString(restApiPort.Name),

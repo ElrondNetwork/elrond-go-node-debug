@@ -33,33 +33,19 @@ type SimpleDebugNode struct {
 	TxProcessor      process.TransactionProcessor
 	BlockChainHook   vmcommon.BlockchainHook
 	AddressConverter state.AddressConverter
+	VMContainer      process.VirtualMachinesContainer
 }
 
-func NewSimpleDebugNode(accounts state.AccountsAdapter, genesisFile string) (*SimpleDebugNode, error) {
-	genesisConfig, err := sharding.NewGenesisConfig(genesisFile)
-	if err != nil {
-		return nil, err
-	}
-
+func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error) {
 	if accounts == nil || accounts.IsInterfaceNil() {
 		return nil, errors.New("nil accounts adapter")
 	}
 
 	node := &SimpleDebugNode{
-		Accounts:       accounts,
-		TxProcessor:    nil,
-		BlockChainHook: nil,
-	}
-
-	node.AddressConverter = addressConverter
-
-	mapInValues, err := genesisConfig.InitialNodesBalances(shardCoordinator, node.AddressConverter)
-	if err != nil {
-		return nil, err
-	}
-
-	for pubKey, value := range mapInValues {
-		_ = CreateAccount(node.Accounts, []byte(pubKey), 0, value)
+		Accounts:         accounts,
+		TxProcessor:      nil,
+		BlockChainHook:   nil,
+		AddressConverter: addressConverter,
 	}
 
 	node.TxProcessor, node.BlockChainHook = CreateTxProcessorWithOneSCExecutorWithVMs(node.Accounts)
@@ -67,7 +53,25 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter, genesisFile string) (*Si
 	return node, nil
 }
 
-const defaultRound uint64 = 444
+func (node *SimpleDebugNode) AddAccountsAccordingToGenesisFile(genesisFile string) error {
+	genesisConfig, err := sharding.NewGenesisConfig(genesisFile)
+	if err != nil {
+		return err
+	}
+
+	mapInValues, err := genesisConfig.InitialNodesBalances(shardCoordinator, node.AddressConverter)
+	if err != nil {
+		return err
+	}
+
+	for pubKey, value := range mapInValues {
+		_ = CreateAccount(node.Accounts, []byte(pubKey), 0, value)
+	}
+
+	return nil
+}
+
+const DefaultRound uint64 = 444
 
 func CreateTxProcessorWithOneSCExecutorWithVMs(accnts state.AccountsAdapter) (process.TransactionProcessor, vmcommon.BlockchainHook) {
 	vmFactory, _ := shard.NewVMContainerFactory(accnts, addressConverter, math.MaxUint64, GasMap)

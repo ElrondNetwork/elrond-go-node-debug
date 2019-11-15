@@ -175,7 +175,7 @@ func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContrac
 		Challenge: nil,
 	}
 
-	err = node.TxProcessor.ProcessTransaction(tx, defaultRound)
+	err = node.TxProcessor.ProcessTransaction(tx, DefaultRound)
 	if err != nil {
 		return nil, err
 	}
