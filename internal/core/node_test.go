@@ -144,12 +144,12 @@ func Test_0_0_3_SOL(t *testing.T) {
 
 	scAddress, _ := context.Node.BlockChainHook.NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
 
-	transferToken(&context, scAddress, "transfer", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
+	transferToken(&context, scAddress, "transfer(address,uint256)", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
 
 	_, err = context.Accounts.Commit()
 	assert.Nil(t, err)
 
-	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
+	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf(address)", context.AliceAddress).Uint64())
 }
 
 func setupTestContext(t *testing.T) testContext {
