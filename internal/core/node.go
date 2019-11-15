@@ -10,15 +10,18 @@ import (
 	arwenConfig "github.com/ElrondNetwork/arwen-wasm-vm/config"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
+	"github.com/ElrondNetwork/elrond-go/facade"
 	"github.com/ElrondNetwork/elrond-go/hashing/sha256"
 	"github.com/ElrondNetwork/elrond-go/integrationTests/mock"
 	"github.com/ElrondNetwork/elrond-go/marshal"
+	"github.com/ElrondNetwork/elrond-go/node/external"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/coordinator"
 	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
 	"github.com/ElrondNetwork/elrond-go/process/transaction"
 	"github.com/ElrondNetwork/elrond-go/sharding"
+	"github.com/ElrondNetwork/elrond-go/statusHandler"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 )
 
@@ -34,6 +37,8 @@ type SimpleDebugNode struct {
 	BlockChainHook   vmcommon.BlockchainHook
 	AddressConverter state.AddressConverter
 	VMContainer      process.VirtualMachinesContainer
+	SCQueryService   external.SCQueryService
+	APIResolver      facade.ApiResolver
 }
 
 func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error) {
@@ -99,9 +104,23 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		return nil, err
 	}
 
+	statusMetrics := statusHandler.NewStatusMetrics()
+
+	scQueryService, err := smartContract.NewSCQueryService(vmContainer)
+	if err != nil {
+		return nil, err
+	}
+
+	apiResolver, err := external.NewNodeApiResolver(scQueryService, statusMetrics)
+	if err != nil {
+		return nil, err
+	}
+
 	node.VMContainer = vmContainer
 	node.TxProcessor = txProcessor
 	node.BlockChainHook = vmFactory.VMAccountsDB()
+	node.SCQueryService = scQueryService
+	node.APIResolver = apiResolver
 
 	return node, nil
 }

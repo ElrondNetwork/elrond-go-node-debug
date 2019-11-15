@@ -17,9 +17,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/core/logger"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	factoryState "github.com/ElrondNetwork/elrond-go/data/state/factory"
-	"github.com/ElrondNetwork/elrond-go/node/external"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract"
-	"github.com/ElrondNetwork/elrond-go/statusHandler"
 	"github.com/urfave/cli"
 )
 
@@ -151,19 +148,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 
 	simpleDebugNode.AddAccountsAccordingToGenesisFile(ctx.GlobalString(genesisFile.Name))
 
-	statusMetrics := statusHandler.NewStatusMetrics()
-
-	scQueryService, err := smartContract.NewSCQueryService(simpleDebugNode.VMContainer)
-	if err != nil {
-		return err
-	}
-
-	apiResolver, err := external.NewNodeApiResolver(scQueryService, statusMetrics)
-	if err != nil {
-		return err
-	}
-
-	ef := debugCore.NewNodeDebugFacade(apiResolver, simpleDebugNode, true)
+	ef := debugCore.NewNodeDebugFacade(simpleDebugNode, true)
 
 	efConfig := &config.FacadeConfig{
 		RestApiPort: ctx.GlobalString(restApiPort.Name),

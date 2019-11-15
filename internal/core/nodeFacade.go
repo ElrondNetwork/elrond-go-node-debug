@@ -13,7 +13,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core/logger"
 	"github.com/ElrondNetwork/elrond-go/core/statistics"
-	baseFacade "github.com/ElrondNetwork/elrond-go/facade"
 	"github.com/ElrondNetwork/elrond-go/node/external"
 	"github.com/ElrondNetwork/elrond-go/ntp"
 	"github.com/gin-gonic/gin"
@@ -28,7 +27,6 @@ const DefaultRestPortOff = "off"
 
 // NodeDebugFacade represents a facade for grouping the functionality for node, transaction and address
 type NodeDebugFacade struct {
-	apiResolver            baseFacade.ApiResolver
 	debugNode              *SimpleDebugNode
 	syncer                 ntp.SyncTimer
 	log                    *logger.Logger
@@ -46,9 +44,8 @@ func (ef *NodeDebugFacade) GetHeartbeats() ([]heartbeat.PubKeyHeartbeat, error) 
 }
 
 // NewNodeDebugFacade creates a new Facade with a NodeWrapper
-func NewNodeDebugFacade(apiResolver baseFacade.ApiResolver, debugNode *SimpleDebugNode, restAPIServerDebugMode bool) *NodeDebugFacade {
+func NewNodeDebugFacade(debugNode *SimpleDebugNode, restAPIServerDebugMode bool) *NodeDebugFacade {
 	return &NodeDebugFacade{
-		apiResolver:            apiResolver,
 		debugNode:              debugNode,
 		restAPIServerDebugMode: restAPIServerDebugMode,
 	}
@@ -163,12 +160,12 @@ func (ef *NodeDebugFacade) startRest(wg *sync.WaitGroup) {
 
 // StatusMetrics will return the node's status metrics
 func (ef *NodeDebugFacade) StatusMetrics() external.StatusMetricsHandler {
-	return ef.apiResolver.StatusMetrics()
+	return ef.debugNode.APIResolver.StatusMetrics()
 }
 
 // ExecuteQuery retrieves data from existing SC trie
 func (ef *NodeDebugFacade) ExecuteSCQuery(query *smartContract.SCQuery) (*vmcommon.VMOutput, error) {
-	return ef.apiResolver.ExecuteSCQuery(query)
+	return ef.debugNode.APIResolver.ExecuteSCQuery(query)
 }
 
 // RunSmartContract deploys a smart contract.
