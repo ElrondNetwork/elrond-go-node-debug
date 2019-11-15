@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/hex"
 	"io/ioutil"
-	"math"
 	"math/big"
 	"strconv"
 	"testing"
@@ -14,7 +13,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
 	"github.com/ElrondNetwork/elrond-go/storage"
 	"github.com/ElrondNetwork/elrond-go/storage/memorydb"
@@ -90,9 +88,9 @@ func TestER20_C_Old(t *testing.T) {
 	assert.Nil(t, err)
 
 	finalAlice := big.NewInt(0).Sub(aliceInit, big.NewInt(int64(nrTxs)*transferOnCalls.Int64()))
-	assert.Equal(t, finalAlice.Uint64(), getBalance(context.Accounts, scAddress, context.AliceAddress).Uint64())
+	assert.Equal(t, finalAlice.Uint64(), getBalance(&context, scAddress, context.AliceAddress).Uint64())
 	finalBob := big.NewInt(int64(nrTxs) * transferOnCalls.Int64())
-	assert.Equal(t, finalBob.Uint64(), getBalance(context.Accounts, scAddress, context.BobAddress).Uint64())
+	assert.Equal(t, finalBob.Uint64(), getBalance(&context, scAddress, context.BobAddress).Uint64())
 }
 
 func TestER20_C_New(t *testing.T) {
@@ -168,19 +166,14 @@ func createMemUnit() storage.Storer {
 	return unit
 }
 
-func getBalance(accnts state.AccountsAdapter, scAddress []byte, accountAddress []byte) *big.Int {
-	vmFactory, _ := shard.NewVMContainerFactory(accnts, addressConverter, math.MaxInt64, GasMap)
-	vmContainer, _ := vmFactory.Create()
-
-	service, _ := smartContract.NewSCQueryService(vmContainer)
-
+func getBalance(context *testContext, scAddress []byte, accountAddress []byte) *big.Int {
 	query := smartContract.SCQuery{
 		ScAddress: scAddress,
 		FuncName:  "do_balance",
 		Arguments: []*big.Int{big.NewInt(0).SetBytes(accountAddress)},
 	}
 
-	vmOutput, _ := service.ExecuteQuery(&query)
+	vmOutput, _ := context.Node.SCQueryService.ExecuteQuery(&query)
 	balance := vmOutput.ReturnData[0]
 	return balance
 }
