@@ -87,13 +87,37 @@ func TestER20_C_Old(t *testing.T) {
 	assert.Nil(t, err)
 
 	finalAlice := big.NewInt(0).Sub(aliceInit, big.NewInt(int64(nrTxs)*transferOnCalls.Int64()))
-	assert.Equal(t, finalAlice.Uint64(), getBalance(&context, scAddress, context.AliceAddress).Uint64())
+	assert.Equal(t, finalAlice.Uint64(), getBalance(&context, scAddress, "do_balance", context.AliceAddress).Uint64())
 	finalBob := big.NewInt(int64(nrTxs) * transferOnCalls.Int64())
-	assert.Equal(t, finalBob.Uint64(), getBalance(&context, scAddress, context.BobAddress).Uint64())
+	assert.Equal(t, finalBob.Uint64(), getBalance(&context, scAddress, "do_balance", context.BobAddress).Uint64())
 }
 
 func TestER20_C_New(t *testing.T) {
+	context := setupTestContext(t)
+	smartContractCode := getSmartContractCode("wrc20_arwen_c.wasm")
 
+	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+		SndAddress: context.OwnerAddress,
+		Value:      "5000",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+	})
+
+	assert.Nil(t, err)
+
+	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
+		ScAddress:  scAddress,
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     "transferToken@" + hex.EncodeToString(context.AliceAddress) + "@" + strconv.FormatUint(500, 16),
+	})
+
+	assert.Nil(t, err)
+
+	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
 }
 
 func setupTestContext(t *testing.T) testContext {
@@ -165,10 +189,10 @@ func createMemUnit() storage.Storer {
 	return unit
 }
 
-func getBalance(context *testContext, scAddress []byte, accountAddress []byte) *big.Int {
+func getBalance(context *testContext, scAddress []byte, balanceFunctionName string, accountAddress []byte) *big.Int {
 	query := smartContract.SCQuery{
 		ScAddress: scAddress,
-		FuncName:  "do_balance",
+		FuncName:  balanceFunctionName,
 		Arguments: []*big.Int{big.NewInt(0).SetBytes(accountAddress)},
 	}
 
