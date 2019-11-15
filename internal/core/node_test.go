@@ -2,12 +2,11 @@ package core
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"math"
 	"math/big"
+	"strconv"
 	"testing"
-	"time"
 
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
@@ -20,118 +19,105 @@ import (
 	"github.com/ElrondNetwork/elrond-go/storage"
 	"github.com/ElrondNetwork/elrond-go/storage/memorydb"
 	"github.com/ElrondNetwork/elrond-go/storage/storageUnit"
-	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVmDeployWithTransferAndExecuteERC20(t *testing.T) {
-	ownerAddressBytes := []byte("12345678901234567890123456789012")
-	ownerNonce := uint64(11)
+func TestER20_C_Old(t *testing.T) {
+	ownerNonce := uint64(1)
+	ownerAddress := []byte("12345678901234567890123456789012")
 	ownerBalance := big.NewInt(100000000)
+	aliceAddress := []byte("12345678901234567890123456789111")
+	aliceNonce := uint64(1)
+	aliceInit := big.NewInt(100000)
+	bobAddress := []byte("12345678901234567890123456789222")
+	bobNonce := uint64(1)
 	round := uint64(444)
-	gasPrice := uint64(1)
-	gasLimit := uint64(100000)
 	transferOnCalls := big.NewInt(5)
 
-	scCode, err := ioutil.ReadFile("./testdata/wrc20_arwen.wasm")
-	assert.Nil(t, err)
+	accounts := createInMemoryShardAccountsDB()
+	_ = CreateAccount(accounts, ownerAddress, ownerNonce, ownerBalance)
+	_ = CreateAccount(accounts, aliceAddress, aliceNonce, big.NewInt(1000000))
+	_ = CreateAccount(accounts, bobAddress, bobNonce, big.NewInt(1000000))
 
-	scCodeString := hex.EncodeToString(scCode)
+	txProc, blockchainHook := CreateTxProcessorWithOneSCExecutorWithVMs(accounts)
+
+	smartContractCode := getSmartContractCode("wrc20_arwen_c_old.wasm")
 
 	tx := &transaction.Transaction{
 		Nonce:     ownerNonce,
-		Value:     transferOnCalls,
+		Value:     big.NewInt(0),
 		RcvAddr:   CreateEmptyAddress().Bytes(),
-		SndAddr:   ownerAddressBytes,
-		GasPrice:  gasPrice,
-		GasLimit:  gasLimit,
-		Data:      scCodeString + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+		SndAddr:   ownerAddress,
+		GasPrice:  1,
+		GasLimit:  500000,
+		Data:      smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
 		Signature: nil,
 		Challenge: nil,
 	}
 
-	txProc, accnts, blockchainHook := createPreparedTxProcessorAndAccountsWithVMs(ownerNonce, ownerAddressBytes, ownerBalance)
-
-	err = txProc.ProcessTransaction(tx, round)
+	err := txProc.ProcessTransaction(tx, round)
 	assert.Nil(t, err)
 
-	_, err = accnts.Commit()
+	_, err = accounts.Commit()
 	assert.Nil(t, err)
 
-	scAddress, _ := blockchainHook.NewAddress(ownerAddressBytes, ownerNonce, factory.ArwenVirtualMachine)
+	scAddress, _ := blockchainHook.NewAddress(ownerAddress, ownerNonce, factory.ArwenVirtualMachine)
 
-	alice := []byte("12345678901234567890123456789111")
-	aliceNonce := uint64(0)
-	_ = CreateAccount(accnts, alice, aliceNonce, big.NewInt(1000000))
-
-	bob := []byte("12345678901234567890123456789222")
-	_ = CreateAccount(accnts, bob, 0, big.NewInt(1000000))
-
-	initAlice := big.NewInt(100000)
 	tx = &transaction.Transaction{
-		Nonce:     aliceNonce,
-		Value:     initAlice,
-		RcvAddr:   scAddress,
-		SndAddr:   alice,
-		GasPrice:  0,
-		GasLimit:  5000,
-		Data:      "topUp",
-		Signature: nil,
-		Challenge: nil,
+		Nonce:    aliceNonce,
+		Value:    aliceInit,
+		RcvAddr:  scAddress,
+		SndAddr:  aliceAddress,
+		GasPrice: 1,
+		GasLimit: 500000,
+		Data:     "topUp",
 	}
-	start := time.Now()
+
 	err = txProc.ProcessTransaction(tx, round)
-	elapsedTime := time.Since(start)
-	fmt.Printf("time elapsed to process topup %s \n", elapsedTime.String())
 	assert.Nil(t, err)
 
-	_, err = accnts.Commit()
+	_, err = accounts.Commit()
 	assert.Nil(t, err)
 
 	aliceNonce++
 
-	start = time.Now()
 	nrTxs := 10
 
 	for i := 0; i < nrTxs; i++ {
-		tx = &transaction.Transaction{
-			Nonce:     aliceNonce,
-			Value:     big.NewInt(0),
-			RcvAddr:   scAddress,
-			SndAddr:   alice,
-			GasPrice:  0,
-			GasLimit:  5000,
-			Data:      "transfer@" + hex.EncodeToString(bob) + "@" + transferOnCalls.String(),
-			Signature: nil,
-			Challenge: nil,
-		}
-
-		err = txProc.ProcessTransaction(tx, round)
-		assert.Nil(t, err)
-
-		aliceNonce++
+		transferToken(txProc, scAddress, "transfer", aliceAddress, &aliceNonce, bobAddress, 5)
 	}
 
-	_, err = accnts.Commit()
+	_, err = accounts.Commit()
 	assert.Nil(t, err)
 
-	elapsedTime = time.Since(start)
-	fmt.Printf("time elapsed to process %d ERC20 transfers %s \n", nrTxs, elapsedTime.String())
-
-	finalAlice := big.NewInt(0).Sub(initAlice, big.NewInt(int64(nrTxs)*transferOnCalls.Int64()))
-	assert.Equal(t, finalAlice.Uint64(), getBalance(accnts, scAddress, alice).Uint64())
+	finalAlice := big.NewInt(0).Sub(aliceInit, big.NewInt(int64(nrTxs)*transferOnCalls.Int64()))
+	assert.Equal(t, finalAlice.Uint64(), getBalance(accounts, scAddress, aliceAddress).Uint64())
 	finalBob := big.NewInt(int64(nrTxs) * transferOnCalls.Int64())
-	assert.Equal(t, finalBob.Uint64(), getBalance(accnts, scAddress, bob).Uint64())
+	assert.Equal(t, finalBob.Uint64(), getBalance(accounts, scAddress, bobAddress).Uint64())
 }
 
-func createPreparedTxProcessorAndAccountsWithVMs(senderNonce uint64, senderAddressBytes []byte, senderBalance *big.Int) (process.TransactionProcessor, state.AccountsAdapter, vmcommon.BlockchainHook) {
+func getSmartContractCode(fileName string) string {
+	code, _ := ioutil.ReadFile("./testdata/" + fileName)
+	codeEncoded := hex.EncodeToString(code)
+	return codeEncoded
+}
 
-	accnts := createInMemoryShardAccountsDB()
-	_ = CreateAccount(accnts, senderAddressBytes, senderNonce, senderBalance)
+func transferToken(processor process.TransactionProcessor, scAddress []byte, transferFunctionName string, from []byte, fromNonce *uint64, to []byte, amount uint64) error {
+	txData := transferFunctionName + "@" + hex.EncodeToString(to) + "@" + strconv.FormatUint(amount, 16)
 
-	txProcessor, blockchainHook := CreateTxProcessorWithOneSCExecutorWithVMs(accnts)
+	tx := &transaction.Transaction{
+		Nonce:    *fromNonce,
+		Value:    big.NewInt(0),
+		RcvAddr:  scAddress,
+		SndAddr:  from,
+		GasPrice: 1,
+		GasLimit: 500000,
+		Data:     txData,
+	}
 
-	return txProcessor, accnts, blockchainHook
+	err := processor.ProcessTransaction(tx, 444)
+	*fromNonce++
+	return err
 }
 
 func createInMemoryShardAccountsDB() *state.AccountsDB {
