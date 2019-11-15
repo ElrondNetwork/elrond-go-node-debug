@@ -120,6 +120,38 @@ func TestER20_C_New(t *testing.T) {
 	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
 }
 
+func Test_0_0_3_SOL(t *testing.T) {
+	context := setupTestContext(t)
+	smartContractCode := getSmartContractCode("0-0-3_sol.wasm")
+
+	tx := &transaction.Transaction{
+		Nonce:     context.OwnerNonce,
+		Value:     big.NewInt(0),
+		RcvAddr:   CreateEmptyAddress().Bytes(),
+		SndAddr:   context.OwnerAddress,
+		GasPrice:  1,
+		GasLimit:  500000,
+		Data:      smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+		Signature: nil,
+		Challenge: nil,
+	}
+
+	err := context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
+	assert.Nil(t, err)
+
+	_, err = context.Accounts.Commit()
+	assert.Nil(t, err)
+
+	scAddress, _ := context.Node.BlockChainHook.NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
+
+	transferToken(&context, scAddress, "transfer", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
+
+	_, err = context.Accounts.Commit()
+	assert.Nil(t, err)
+
+	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
+}
+
 func setupTestContext(t *testing.T) testContext {
 	context := testContext{}
 
