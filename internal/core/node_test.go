@@ -4,18 +4,15 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"math/big"
-	"strconv"
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/data/trie"
 	"github.com/ElrondNetwork/elrond-go/marshal"
+	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract"
-	"github.com/ElrondNetwork/elrond-go/storage"
-	"github.com/ElrondNetwork/elrond-go/storage/memorydb"
-	"github.com/ElrondNetwork/elrond-go/storage/storageUnit"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -57,7 +54,7 @@ func TestER20_C_Old(t *testing.T) {
 	_, err = context.Accounts.Commit()
 	assert.Nil(t, err)
 
-	scAddress, _ := context.Node.BlockChainHook.NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
+	scAddress, _ := context.Node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
 
 	tx = &transaction.Transaction{
 		Nonce:    context.AliceNonce,
@@ -80,7 +77,7 @@ func TestER20_C_Old(t *testing.T) {
 	nrTxs := 10
 
 	for i := 0; i < nrTxs; i++ {
-		transferToken(&context, scAddress, "transfer", context.AliceAddress, &context.AliceNonce, context.BobAddress, 5)
+		transferToken(t, &context, scAddress, "transfer", context.AliceAddress, &context.AliceNonce, context.BobAddress, 5)
 	}
 
 	_, err = context.Accounts.Commit()
@@ -98,13 +95,15 @@ func TestER20_C_New(t *testing.T) {
 
 	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
-		Value:      "5000",
+		Value:      "0",
 		GasPrice:   1,
 		GasLimit:   500000,
-		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine) + "@" + formatHexNumber(5000),
 	})
 
 	assert.Nil(t, err)
+
+	txData := "transferToken@" + hex.EncodeToString(context.AliceAddress) + "@" + formatHexNumber(1000)
 
 	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
 		ScAddress:  scAddress,
@@ -112,12 +111,13 @@ func TestER20_C_New(t *testing.T) {
 		Value:      "0",
 		GasPrice:   1,
 		GasLimit:   500000,
-		TxData:     "transferToken@" + hex.EncodeToString(context.AliceAddress) + "@" + strconv.FormatUint(500, 16),
+		TxData:     txData,
 	})
 
 	assert.Nil(t, err)
 
-	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
+	assert.Equal(t, uint64(4000), getBalance(&context, scAddress, "balanceOf", context.OwnerAddress).Uint64())
+	assert.Equal(t, uint64(1000), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
 }
 
 func Test_0_0_3_SOL(t *testing.T) {
@@ -142,13 +142,12 @@ func Test_0_0_3_SOL(t *testing.T) {
 	_, err = context.Accounts.Commit()
 	assert.Nil(t, err)
 
-	scAddress, _ := context.Node.BlockChainHook.NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
+	scAddress, _ := context.Node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
 	context.OwnerNonce++
 
 	_, err = context.Accounts.Commit()
 
-	err = transferToken(&context, scAddress, "transfer(address,uint256)", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
-	assert.Nil(t, err)
+	transferToken(t, &context, scAddress, "transfer(address,uint256)", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
 
 	_, err = context.Accounts.Commit()
 	assert.Nil(t, err)
@@ -176,6 +175,7 @@ func setupTestContext(t *testing.T) testContext {
 
 	node, err := NewSimpleDebugNode(accounts)
 	assert.Nil(t, err)
+	assert.NotNil(t, node)
 
 	context.Accounts = accounts
 	context.Node = node
@@ -189,8 +189,8 @@ func getSmartContractCode(fileName string) string {
 	return codeEncoded
 }
 
-func transferToken(context *testContext, scAddress []byte, transferFunctionName string, from []byte, fromNonce *uint64, to []byte, amount uint64) error {
-	txData := transferFunctionName + "@" + hex.EncodeToString(to) + "@" + strconv.FormatUint(amount, 16)
+func transferToken(t *testing.T, context *testContext, scAddress []byte, transferFunctionName string, from []byte, fromNonce *uint64, to []byte, amount uint64) {
+	txData := transferFunctionName + "@" + hex.EncodeToString(to) + "@" + formatHexNumber(amount)
 
 	tx := &transaction.Transaction{
 		Nonce:    *fromNonce,
@@ -203,8 +203,8 @@ func transferToken(context *testContext, scAddress []byte, transferFunctionName 
 	}
 
 	err := context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
+	assert.Nil(t, err)
 	*fromNonce++
-	return err
 }
 
 func createInMemoryShardAccountsDB() *state.AccountsDB {
@@ -217,22 +217,20 @@ func createInMemoryShardAccountsDB() *state.AccountsDB {
 	return adb
 }
 
-func createMemUnit() storage.Storer {
-	cache, _ := storageUnit.NewCache(storageUnit.LRUCache, 10, 1)
-	persist, _ := memorydb.New()
-
-	unit, _ := storageUnit.NewStorageUnit(cache, persist)
-	return unit
-}
-
 func getBalance(context *testContext, scAddress []byte, balanceFunctionName string, accountAddress []byte) *big.Int {
-	query := smartContract.SCQuery{
+	query := process.SCQuery{
 		ScAddress: scAddress,
 		FuncName:  balanceFunctionName,
-		Arguments: []*big.Int{big.NewInt(0).SetBytes(accountAddress)},
+		Arguments: [][]byte{accountAddress},
 	}
 
 	vmOutput, _ := context.Node.SCQueryService.ExecuteQuery(&query)
-	balance := vmOutput.ReturnData[0]
+	balanceBytes := vmOutput.ReturnData[0]
+	balance := big.NewInt(0).SetBytes(balanceBytes)
 	return balance
+}
+
+func formatHexNumber(number uint64) string {
+	bytes := big.NewInt(0).SetUint64(number).Bytes()
+	return hex.EncodeToString(bytes)
 }
