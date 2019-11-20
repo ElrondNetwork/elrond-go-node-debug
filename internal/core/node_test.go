@@ -158,13 +158,13 @@ func Test_0_0_3_SOL(t *testing.T) {
 func setupTestContext(t *testing.T) testContext {
 	context := testContext{}
 
-	context.OwnerAddress = []byte{0, 0, 0, 0, 0, 0, 0, 0, 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 0, 0, 0, 0, 0, 0, 0, 0}
+	context.OwnerAddress = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'}
 	context.OwnerNonce = uint64(1)
 	context.OwnerBalance = big.NewInt(100000000)
-	context.AliceAddress = []byte{'a', 0, 0, 0, 0, 0, 0, 0, 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 0, 0, 0, 0, 0, 0, 0, 0}
+	context.AliceAddress = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a'}
 	context.AliceNonce = uint64(1)
 	context.AliceBalance = big.NewInt(1000000)
-	context.BobAddress = []byte{'b', 0, 0, 0, 0, 0, 0, 0, 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 0, 0, 0, 0, 0, 0, 0, 0}
+	context.BobAddress = []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b'}
 	context.BobNonce = uint64(1)
 	context.BobBalance = big.NewInt(1000000)
 
