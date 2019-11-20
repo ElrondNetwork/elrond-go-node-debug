@@ -10,6 +10,7 @@ import (
 	arwenConfig "github.com/ElrondNetwork/arwen-wasm-vm/config"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
+	"github.com/ElrondNetwork/elrond-go/data/typeConverters/uint64ByteSlice"
 	"github.com/ElrondNetwork/elrond-go/facade"
 	"github.com/ElrondNetwork/elrond-go/hashing/sha256"
 	"github.com/ElrondNetwork/elrond-go/integrationTests/mock"
@@ -19,10 +20,10 @@ import (
 	"github.com/ElrondNetwork/elrond-go/process/coordinator"
 	"github.com/ElrondNetwork/elrond-go/process/factory/shard"
 	"github.com/ElrondNetwork/elrond-go/process/smartContract"
+	"github.com/ElrondNetwork/elrond-go/process/smartContract/hooks"
 	"github.com/ElrondNetwork/elrond-go/process/transaction"
 	"github.com/ElrondNetwork/elrond-go/sharding"
 	"github.com/ElrondNetwork/elrond-go/statusHandler"
-	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 )
 
 var marshalizer = &marshal.JsonMarshalizer{}
@@ -34,7 +35,7 @@ var GasMap = arwenConfig.MakeGasMap(1)
 type SimpleDebugNode struct {
 	Accounts         state.AccountsAdapter
 	TxProcessor      process.TransactionProcessor
-	BlockChainHook   vmcommon.BlockchainHook
+	BlockChainHook   process.BlockChainHookHandler
 	AddressConverter state.AddressConverter
 	VMContainer      process.VirtualMachinesContainer
 	SCQueryService   external.SCQueryService
@@ -53,7 +54,17 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		AddressConverter: addressConverter,
 	}
 
-	vmFactory, err := shard.NewVMContainerFactory(accounts, addressConverter, math.MaxUint64, GasMap)
+	argBlockChainHook := hooks.ArgBlockChainHook{
+		Accounts:         accounts,
+		AddrConv:         addressConverter,
+		StorageService:   CreateStorageService(),
+		BlockChain:       CreateBlockChain(),
+		ShardCoordinator: shardCoordinator,
+		Marshalizer:      marshalizer,
+		Uint64Converter:  uint64ByteSlice.NewBigEndianConverter(),
+	}
+
+	vmFactory, err := shard.NewVMContainerFactory(math.MaxUint64, GasMap, argBlockChainHook)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +85,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		hasher,
 		marshalizer,
 		accounts,
-		vmFactory.VMAccountsDB(),
+		vmFactory.BlockChainHookImpl(),
 		addressConverter,
 		shardCoordinator,
 		&mock.IntermediateTransactionHandlerMock{},
@@ -118,7 +129,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 
 	node.VMContainer = vmContainer
 	node.TxProcessor = txProcessor
-	node.BlockChainHook = vmFactory.VMAccountsDB()
+	node.BlockChainHook = vmFactory.BlockChainHookImpl()
 	node.SCQueryService = scQueryService
 	node.APIResolver = apiResolver
 

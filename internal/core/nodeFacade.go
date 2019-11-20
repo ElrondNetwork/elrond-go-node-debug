@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/ElrondNetwork/elrond-go/node/heartbeat"
-	"github.com/ElrondNetwork/elrond-go/process/smartContract"
+	"github.com/ElrondNetwork/elrond-go/process"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 
 	"github.com/ElrondNetwork/elrond-go/api/middleware"
@@ -164,7 +164,7 @@ func (ef *NodeDebugFacade) StatusMetrics() external.StatusMetricsHandler {
 }
 
 // ExecuteQuery retrieves data from existing SC trie
-func (ef *NodeDebugFacade) ExecuteSCQuery(query *smartContract.SCQuery) (*vmcommon.VMOutput, error) {
+func (ef *NodeDebugFacade) ExecuteSCQuery(query *process.SCQuery) (*vmcommon.VMOutput, error) {
 	return ef.debugNode.APIResolver.ExecuteSCQuery(query)
 }
 

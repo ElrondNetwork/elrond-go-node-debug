@@ -3,9 +3,8 @@ package core
 import (
 	"encoding/hex"
 	"fmt"
-	"math/big"
 
-	"github.com/ElrondNetwork/elrond-go/process/smartContract"
+	"github.com/ElrondNetwork/elrond-go/process"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/gin-gonic/gin"
 )
@@ -80,25 +79,25 @@ func doExecuteQuery(context *gin.Context) (*vmcommon.VMOutput, error) {
 	return vmOutput, nil
 }
 
-func createSCQuery(request *VMValueRequest) (*smartContract.SCQuery, error) {
+func createSCQuery(request *VMValueRequest) (*process.SCQuery, error) {
 	decodedAddress, err := hex.DecodeString(request.ScAddress)
 	if err != nil {
 		return nil, fmt.Errorf("'%s' is not a valid hex string: %s", request.ScAddress, err.Error())
 	}
 
-	argumentsAsInt := make([]*big.Int, 0)
+	argumentsAsByteArrays := make([][]byte, 0)
 	for _, arg := range request.Args {
 		argBytes, err := hex.DecodeString(arg)
 		if err != nil {
 			return nil, fmt.Errorf("'%s' is not a valid hex string: %s", arg, err.Error())
 		}
 
-		argumentsAsInt = append(argumentsAsInt, big.NewInt(0).SetBytes(argBytes))
+		argumentsAsByteArrays = append(argumentsAsByteArrays, argBytes)
 	}
 
-	return &smartContract.SCQuery{
+	return &process.SCQuery{
 		ScAddress: decodedAddress,
 		FuncName:  request.FuncName,
-		Arguments: argumentsAsInt,
+		Arguments: argumentsAsByteArrays,
 	}, nil
 }

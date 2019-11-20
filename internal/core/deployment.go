@@ -8,6 +8,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -121,7 +122,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		Data:     command.TxData,
 	}
 
-	resultingAddress, err := node.BlockChainHook.NewAddress(publicKey, nonce, factory.ArwenVirtualMachine)
+	resultingAddress, err := node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(publicKey, nonce, factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +143,7 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 		return nil, err
 	}
 
-	resultingAddress, err := node.BlockChainHook.NewAddress(command.SndAddress, account.GetNonce(), factory.ArwenVirtualMachine)
+	resultingAddress, err := node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(command.SndAddress, account.GetNonce(), factory.ArwenVirtualMachine)
 	if err != nil {
 		return nil, err
 	}
