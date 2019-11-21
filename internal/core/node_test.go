@@ -30,7 +30,7 @@ type testContext struct {
 	Node         *SimpleDebugNode
 }
 
-func TestER20_C_New(t *testing.T) {
+func TestER20_C(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("wrc20_arwen_c.wasm")
 
