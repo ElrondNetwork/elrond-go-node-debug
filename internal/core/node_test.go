@@ -30,65 +30,6 @@ type testContext struct {
 	Node         *SimpleDebugNode
 }
 
-func TestER20_C_Old(t *testing.T) {
-	context := setupTestContext(t)
-	transferOnCalls := big.NewInt(5)
-	aliceInit := big.NewInt(100000)
-	smartContractCode := getSmartContractCode("wrc20_arwen_c_old.wasm")
-
-	tx := &transaction.Transaction{
-		Nonce:     context.OwnerNonce,
-		Value:     big.NewInt(0),
-		RcvAddr:   CreateEmptyAddress().Bytes(),
-		SndAddr:   context.OwnerAddress,
-		GasPrice:  1,
-		GasLimit:  500000,
-		Data:      smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
-		Signature: nil,
-		Challenge: nil,
-	}
-
-	err := context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
-	assert.Nil(t, err)
-
-	_, err = context.Accounts.Commit()
-	assert.Nil(t, err)
-
-	scAddress, _ := context.Node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
-
-	tx = &transaction.Transaction{
-		Nonce:    context.AliceNonce,
-		Value:    aliceInit,
-		RcvAddr:  scAddress,
-		SndAddr:  context.AliceAddress,
-		GasPrice: 1,
-		GasLimit: 500000,
-		Data:     "topUp",
-	}
-
-	err = context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
-	assert.Nil(t, err)
-
-	_, err = context.Accounts.Commit()
-	assert.Nil(t, err)
-
-	context.AliceNonce++
-
-	nrTxs := 10
-
-	for i := 0; i < nrTxs; i++ {
-		transferToken(t, &context, scAddress, "transfer", context.AliceAddress, &context.AliceNonce, context.BobAddress, 5)
-	}
-
-	_, err = context.Accounts.Commit()
-	assert.Nil(t, err)
-
-	finalAlice := big.NewInt(0).Sub(aliceInit, big.NewInt(int64(nrTxs)*transferOnCalls.Int64()))
-	assert.Equal(t, finalAlice.Uint64(), getBalance(&context, scAddress, "do_balance", context.AliceAddress).Uint64())
-	finalBob := big.NewInt(int64(nrTxs) * transferOnCalls.Int64())
-	assert.Equal(t, finalBob.Uint64(), getBalance(&context, scAddress, "do_balance", context.BobAddress).Uint64())
-}
-
 func TestER20_C_New(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("wrc20_arwen_c.wasm")
