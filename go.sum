@@ -18,6 +18,7 @@ github.com/ElrondNetwork/elrond-vm v0.0.20/go.mod h1:X+ds9WEH2qaxeQpZ3zNyJ3crmQK
 github.com/ElrondNetwork/elrond-vm-common v0.1.2 h1:QsCxMTrMqtOvjrnvkzGIVgG9s/jv4rqbZajEz/Wujqg=
 github.com/ElrondNetwork/elrond-vm-common v0.1.2/go.mod h1:ZakxPST/Wt8umnRtA9gobcy3Dw2bywxwkC54P5VhO9g=
 github.com/ElrondNetwork/elrond-vm-util v0.0.8/go.mod h1:iIniCNE+6dPLTKagN2mO4zH3obT7bPYQKBO30GQNSlQ=
+github.com/ElrondNetwork/elrond-vm-util v0.0.9/go.mod h1:iIniCNE+6dPLTKagN2mO4zH3obT7bPYQKBO30GQNSlQ=
 github.com/ElrondNetwork/go-ext-wasm v0.1.0 h1:aSXdg60JLQMSYdQbq0VtqpoyMdFYZqz09BcGiKwGY5U=
 github.com/ElrondNetwork/go-ext-wasm v0.1.0/go.mod h1:wlns4D0OzJP+q/cLweFz1rGpoZOG8LbGYX2jD31HCgw=
 github.com/Kubuxu/go-os-helper v0.0.1/go.mod h1:N8B+I7vPCT80IcP58r50u4+gEEcsZETFUpAzWW2ep1Y=
