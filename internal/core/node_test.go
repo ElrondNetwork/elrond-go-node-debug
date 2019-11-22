@@ -32,7 +32,7 @@ type testContext struct {
 
 func TestER20_C(t *testing.T) {
 	context := setupTestContext(t)
-	smartContractCode := getSmartContractCode("wrc20_arwen_c.wasm")
+	smartContractCode := getSmartContractCode("./testdata/wrc20_arwen_c.wasm")
 
 	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
@@ -63,7 +63,7 @@ func TestER20_C(t *testing.T) {
 
 func Test_0_0_3_SOL(t *testing.T) {
 	context := setupTestContext(t)
-	smartContractCode := getSmartContractCode("0-0-3_sol.wasm")
+	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
 	tx := &transaction.Transaction{
 		Nonce:     context.OwnerNonce,
@@ -87,6 +87,8 @@ func Test_0_0_3_SOL(t *testing.T) {
 	context.OwnerNonce++
 
 	_, err = context.Accounts.Commit()
+
+	assert.Equal(t, uint64(100000000), getBalance(&context, scAddress, "balanceOf(address)", context.OwnerAddress).Uint64())
 
 	transferToken(t, &context, scAddress, "transfer(address,uint256)", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
 
@@ -125,7 +127,7 @@ func setupTestContext(t *testing.T) testContext {
 }
 
 func getSmartContractCode(fileName string) string {
-	code, _ := ioutil.ReadFile("./testdata/" + fileName)
+	code, _ := ioutil.ReadFile(fileName)
 	codeEncoded := hex.EncodeToString(code)
 	return codeEncoded
 }
