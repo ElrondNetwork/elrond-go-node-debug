@@ -17,4 +17,4 @@ replace github.com/ElrondNetwork/elrond-vm => github.com/ElrondNetwork/elrond-vm
 
 replace github.com/ElrondNetwork/elrond-vm-common => github.com/ElrondNetwork/elrond-vm-common v0.1.2
 
-replace github.com/ElrondNetwork/arwen-wasm-vm => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191120082239-347dcca62156
+replace github.com/ElrondNetwork/arwen-wasm-vm => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20191122141634-9ce2890e85a9
