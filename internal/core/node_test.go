@@ -12,7 +12,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
-	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,15 +43,13 @@ func TestER20_C(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	txData := "transferToken@" + hex.EncodeToString(context.AliceAddress) + "@" + formatHexNumber(1000)
-
 	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
 		ScAddress:  scAddress,
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
 		GasLimit:   500000,
-		TxData:     txData,
+		TxData:     "transferToken@" + hex.EncodeToString(context.AliceAddress) + "@" + formatHexNumber(1000),
 	})
 
 	assert.Nil(t, err)
@@ -65,28 +62,16 @@ func Test_0_0_3_SOL(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
-	tx := &transaction.Transaction{
-		Nonce:     context.OwnerNonce,
-		Value:     big.NewInt(0),
-		RcvAddr:   CreateEmptyAddress().Bytes(),
-		SndAddr:   context.OwnerAddress,
-		GasPrice:  1,
-		GasLimit:  500000,
-		Data:      smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
-		Signature: nil,
-		Challenge: nil,
-	}
+	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+	})
 
-	err := context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
 	assert.Nil(t, err)
-
-	_, err = context.Accounts.Commit()
-	assert.Nil(t, err)
-
-	scAddress, _ := context.Node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(context.OwnerAddress, context.OwnerNonce, factory.ArwenVirtualMachine)
 	context.OwnerNonce++
-
-	_, err = context.Accounts.Commit()
 
 	assert.Equal(t, uint64(100000000), getBalance(&context, scAddress, "balanceOf(address)", context.OwnerAddress).Uint64())
 
