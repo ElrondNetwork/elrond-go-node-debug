@@ -76,10 +76,6 @@ func Test_0_0_3_SOL(t *testing.T) {
 	assert.Equal(t, uint64(100000000), getBalance(&context, scAddress, "balanceOf(address)", context.OwnerAddress).Uint64())
 
 	transferToken(t, &context, scAddress, "transfer(address,uint256)", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
-
-	_, err = context.Accounts.Commit()
-	assert.Nil(t, err)
-
 	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf(address)", context.AliceAddress).Uint64())
 }
 
