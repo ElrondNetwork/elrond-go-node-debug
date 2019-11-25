@@ -29,7 +29,7 @@ type testContext struct {
 	Node         *SimpleDebugNode
 }
 
-func TestER20_C(t *testing.T) {
+func Test_C_ERC20(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/wrc20_arwen_c.wasm")
 
@@ -58,7 +58,7 @@ func TestER20_C(t *testing.T) {
 	assert.Equal(t, uint64(1000), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
 }
 
-func Test_0_0_3_SOL(t *testing.T) {
+func Test_SOL_ERC20_0_0_3(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
@@ -77,6 +77,77 @@ func Test_0_0_3_SOL(t *testing.T) {
 
 	transferToken(t, &context, scAddress, "transfer(address,uint256)", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
 	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf(address)", context.AliceAddress).Uint64())
+}
+
+func Test_NoPanic_WhenBadCode(t *testing.T) {
+	context := setupTestContext(t)
+
+	_, _ = context.Node.DeploySmartContract(DeploySmartContractCommand{
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     "123456" + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+	})
+}
+
+func Test_NoPanic_SOL_WhenBadFunction(t *testing.T) {
+	context := setupTestContext(t)
+	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
+
+	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+	})
+
+	assert.Nil(t, err)
+	context.OwnerNonce++
+
+	_, _ = context.Node.RunSmartContract(RunSmartContractCommand{
+		ScAddress:  scAddress,
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     "badFunction@0000@0000",
+	})
+
+	_, _ = context.Node.RunSmartContract(RunSmartContractCommand{
+		ScAddress:  scAddress,
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     "@",
+	})
+}
+
+func Test_NoPanic_SOL_WhenBadArgumens(t *testing.T) {
+	context := setupTestContext(t)
+	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
+
+	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
+	})
+
+	assert.Nil(t, err)
+	context.OwnerNonce++
+
+	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
+		ScAddress:  scAddress,
+		SndAddress: context.OwnerAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     "transfer(address,uint256)@0000@1000",
+	})
 }
 
 func setupTestContext(t *testing.T) testContext {
