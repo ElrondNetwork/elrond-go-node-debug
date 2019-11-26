@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -14,7 +15,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go/cmd/node/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core"
-	"github.com/ElrondNetwork/elrond-go/core/logger"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	factoryState "github.com/ElrondNetwork/elrond-go/data/state/factory"
 	"github.com/urfave/cli"
@@ -60,8 +60,6 @@ var genesisFile = cli.StringFlag{
 }
 
 func main() {
-	log := logger.DefaultLogger()
-
 	app := cli.NewApp()
 	cli.AppHelpTemplate = nodeHelpTemplate
 	app.Name = "Elrond Node CLI App"
@@ -95,7 +93,7 @@ func main() {
 
 }
 
-func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
+func startDebugNode(ctx *cli.Context) error {
 	stop := make(chan bool, 1)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -120,7 +118,7 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		workingDir,
 		"defaultDBPath",
 		fmt.Sprintf("%s_%d", "0", 0),
-		fmt.Sprintf("%s_%s", "0", 0))
+		fmt.Sprintf("%s_%d", "0", 0))
 
 	coreArgs := factory.NewCoreComponentsFactoryArgs(generalConfig, uniqueDBFolder)
 	coreComponents, err := factory.CoreComponentsFactory(coreArgs)
@@ -154,7 +152,6 @@ func startDebugNode(ctx *cli.Context, log *logger.Logger) error {
 		RestApiPort: ctx.GlobalString(restApiPort.Name),
 	}
 
-	ef.SetLogger(log)
 	ef.SetConfig(efConfig)
 
 	wg := sync.WaitGroup{}

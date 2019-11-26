@@ -8,10 +8,10 @@ import (
 	"github.com/ElrondNetwork/elrond-go/node/heartbeat"
 	"github.com/ElrondNetwork/elrond-go/process"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
+	"github.com/prometheus/common/log"
 
 	"github.com/ElrondNetwork/elrond-go/api/middleware"
 	"github.com/ElrondNetwork/elrond-go/config"
-	"github.com/ElrondNetwork/elrond-go/core/logger"
 	"github.com/ElrondNetwork/elrond-go/core/statistics"
 	"github.com/ElrondNetwork/elrond-go/node/external"
 	"github.com/ElrondNetwork/elrond-go/ntp"
@@ -29,7 +29,6 @@ const DefaultRestPortOff = "off"
 type NodeDebugFacade struct {
 	debugNode              *SimpleDebugNode
 	syncer                 ntp.SyncTimer
-	log                    *logger.Logger
 	tpsBenchmark           *statistics.TpsBenchmark
 	config                 *config.FacadeConfig
 	restAPIServerDebugMode bool
@@ -49,11 +48,6 @@ func NewNodeDebugFacade(debugNode *SimpleDebugNode, restAPIServerDebugMode bool)
 		debugNode:              debugNode,
 		restAPIServerDebugMode: restAPIServerDebugMode,
 	}
-}
-
-// SetLogger sets the current logger
-func (ef *NodeDebugFacade) SetLogger(log *logger.Logger) {
-	ef.log = log
 }
 
 // SetSyncer sets the current syncer
@@ -109,19 +103,19 @@ func (ef *NodeDebugFacade) RestApiPort() string {
 	if ef.config == nil {
 		return DefaultRestPort
 	}
-	if ef.config.RestApiPort == "" {
+	if ef.config.RestApiInterface == "" {
 		return DefaultRestPort
 	}
-	if ef.config.RestApiPort == DefaultRestPortOff {
+	if ef.config.RestApiInterface == DefaultRestPortOff {
 		return DefaultRestPortOff
 	}
 
-	_, err := strconv.ParseInt(ef.config.RestApiPort, 10, 32)
+	_, err := strconv.ParseInt(ef.config.RestApiInterface, 10, 32)
 	if err != nil {
 		return DefaultRestPort
 	}
 
-	return ef.config.RestApiPort
+	return ef.config.RestApiInterface
 }
 
 // PrometheusMonitoring returns if prometheus is enabled for monitoring by the flag
@@ -145,9 +139,9 @@ func (ef *NodeDebugFacade) startRest(wg *sync.WaitGroup) {
 	port := ef.RestApiPort()
 
 	if port == DefaultRestPortOff {
-		ef.log.Info(fmt.Sprintf("Web server is off"))
+		log.Info(fmt.Sprintf("Web server is off"))
 	} else {
-		ef.log.Info("Starting web server...")
+		log.Info("Starting web server...")
 
 		ws := gin.Default()
 		vmValuesRoutes := ws.Group("/vm-values")
