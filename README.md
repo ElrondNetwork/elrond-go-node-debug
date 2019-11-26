@@ -1,18 +1,9 @@
 # elrond-go-node-debug
 A debug node variant to be used in IDE
 
-## Simple CMD
-
-Build:
+## Build
 
 ```
-$ cd cmd/simple
-$ go build -o ./bin/simple
-```
-
-## Rest API
-
-```
-$ cd cmd/debugWithRestApi
-$ go build -o ./bin/debugWithRestApi
+$ cd cmd/nodedebug
+$ go build -o ./bin/linux/nodedebug
 ```
