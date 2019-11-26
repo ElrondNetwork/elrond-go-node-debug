@@ -52,10 +52,20 @@ func Test_C_ERC20(t *testing.T) {
 		TxData:     "transferToken@" + hex.EncodeToString(context.AliceAddress) + "@" + formatHexNumber(1000),
 	})
 
+	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
+		ScAddress:  scAddress,
+		SndAddress: context.AliceAddress,
+		Value:      "0",
+		GasPrice:   1,
+		GasLimit:   500000,
+		TxData:     "transferToken@" + hex.EncodeToString(context.BobAddress) + "@" + formatHexNumber(500),
+	})
+
 	assert.Nil(t, err)
 
 	assert.Equal(t, uint64(4000), getBalance(&context, scAddress, "balanceOf", context.OwnerAddress).Uint64())
-	assert.Equal(t, uint64(1000), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
+	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
+	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.BobAddress).Uint64())
 }
 
 func Test_SOL_ERC20_0_0_3(t *testing.T) {
