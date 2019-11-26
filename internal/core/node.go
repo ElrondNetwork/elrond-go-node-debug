@@ -90,6 +90,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		shardCoordinator,
 		&mock.IntermediateTransactionHandlerMock{},
 		&MyTransactionFeeHandlerStub{},
+		&mock.FeeHandlerStub{},
 	)
 	if err != nil {
 		return nil, err
@@ -117,7 +118,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 
 	statusMetrics := statusHandler.NewStatusMetrics()
 
-	scQueryService, err := smartContract.NewSCQueryService(vmContainer)
+	scQueryService, err := smartContract.NewSCQueryService(vmContainer, uint64(1000000))
 	if err != nil {
 		return nil, err
 	}

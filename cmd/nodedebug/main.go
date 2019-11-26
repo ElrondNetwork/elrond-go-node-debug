@@ -82,15 +82,13 @@ func main() {
 	debug.SetMaxThreads(100000)
 
 	app.Action = func(c *cli.Context) error {
-		return startDebugNode(c, log)
+		return startDebugNode(c)
 	}
 
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Error(err.Error())
-		os.Exit(1)
+		log.Fatal(err.Error())
 	}
-
 }
 
 func startDebugNode(ctx *cli.Context) error {
@@ -98,10 +96,10 @@ func startDebugNode(ctx *cli.Context) error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Info(fmt.Sprintf("Starting node"))
-	log.Info(fmt.Sprintf("Process ID: %d\n", os.Getpid()))
+	fmt.Printf("Starting node\n")
+	fmt.Printf("Process ID: %d\n", os.Getpid())
 
-	generalConfig, err := loadMainConfig(ctx.GlobalString(configurationFile.Name), log)
+	generalConfig, err := loadMainConfig(ctx.GlobalString(configurationFile.Name))
 	if err != nil {
 		fmt.Println("error loading generalConfig " + err.Error())
 		return err
@@ -110,7 +108,7 @@ func startDebugNode(ctx *cli.Context) error {
 	var workingDir = ""
 	workingDir, err = os.Getwd()
 	if err != nil {
-		log.LogIfError(err)
+		log.Println(err)
 		workingDir = ""
 	}
 
@@ -149,7 +147,7 @@ func startDebugNode(ctx *cli.Context) error {
 	ef := debugCore.NewNodeDebugFacade(simpleDebugNode, true)
 
 	efConfig := &config.FacadeConfig{
-		RestApiPort: ctx.GlobalString(restApiPort.Name),
+		RestApiInterface: ctx.GlobalString(restApiPort.Name),
 	}
 
 	ef.SetConfig(efConfig)
@@ -158,28 +156,28 @@ func startDebugNode(ctx *cli.Context) error {
 	go ef.StartBackgroundServices(&wg)
 	wg.Wait()
 
-	log.Info("Bootstrapping node....")
+	log.Println("Bootstrapping node....")
 	err = ef.StartNode()
 	if err != nil {
-		log.Error("starting node failed", err.Error())
+		log.Println("starting node failed", err.Error())
 		return err
 	}
 
 	go func() {
 		<-sigs
-		log.Info("terminating at user's signal...")
+		log.Println("terminating at user's signal...")
 		stop <- true
 	}()
 
-	log.Info("Application is now running...")
+	log.Println("Application is now running...")
 	<-stop
 
 	return nil
 }
 
-func loadMainConfig(filepath string, log *logger.Logger) (*config.Config, error) {
+func loadMainConfig(filepath string) (*config.Config, error) {
 	cfg := &config.Config{}
-	err := core.LoadTomlFile(cfg, filepath, log)
+	err := core.LoadTomlFile(cfg, filepath)
 	if err != nil {
 		return nil, err
 	}
