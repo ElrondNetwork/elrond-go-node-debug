@@ -79,6 +79,11 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		return nil, err
 	}
 
+	txTypeHandler, err := coordinator.NewTxTypeHandler(addressConverter, shardCoordinator, accounts)
+	if err != nil {
+		return nil, err
+	}
+
 	scProcessor, err := smartContract.NewSmartContractProcessor(
 		vmContainer,
 		argsParser,
@@ -91,12 +96,8 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		&mock.IntermediateTransactionHandlerMock{},
 		&MyTransactionFeeHandlerStub{},
 		&mock.FeeHandlerStub{},
+		txTypeHandler,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	txTypeHandler, err := coordinator.NewTxTypeHandler(addressConverter, shardCoordinator, accounts)
 	if err != nil {
 		return nil, err
 	}
