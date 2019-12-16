@@ -164,7 +164,7 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 		Data:     command.TxData,
 	}
 
-	err = node.TxProcessor.ProcessTransaction(tx, DefaultRound)
+	err = node.TxProcessor.ProcessTransaction(tx)
 	if err != nil {
 		return nil, err
 	}

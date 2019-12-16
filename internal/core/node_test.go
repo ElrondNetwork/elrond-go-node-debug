@@ -207,7 +207,7 @@ func transferToken(t *testing.T, context *testContext, scAddress []byte, transfe
 		Data:     txData,
 	}
 
-	err := context.Node.TxProcessor.ProcessTransaction(tx, DefaultRound)
+	err := context.Node.TxProcessor.ProcessTransaction(tx)
 	assert.Nil(t, err)
 	*fromNonce++
 }
@@ -216,8 +216,8 @@ func createInMemoryShardAccountsDB() *state.AccountsDB {
 	marshalizer := &marshal.JsonMarshalizer{}
 	store := createMemUnit()
 
-	tr, _ := trie.NewTrie(store, marshalizer, hasher)
-	adb, _ := state.NewAccountsDB(tr, hasher, marshalizer, &accountFactory{})
+	tr, _ := trie.NewTrie(store, marshalizer, Hasher)
+	adb, _ := state.NewAccountsDB(tr, Hasher, marshalizer, &accountFactory{})
 
 	return adb
 }

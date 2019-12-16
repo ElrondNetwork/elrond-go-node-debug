@@ -8,6 +8,7 @@ import (
 	"math/big"
 
 	arwenConfig "github.com/ElrondNetwork/arwen-wasm-vm/config"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/core/stubs"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 	"github.com/ElrondNetwork/elrond-go/data/typeConverters/uint64ByteSlice"
@@ -24,10 +25,11 @@ import (
 	"github.com/ElrondNetwork/elrond-go/process/transaction"
 	"github.com/ElrondNetwork/elrond-go/sharding"
 	"github.com/ElrondNetwork/elrond-go/statusHandler"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 )
 
-var marshalizer = &marshal.JsonMarshalizer{}
-var hasher = sha256.Sha256{}
+var Marshalizer = &marshal.JsonMarshalizer{}
+var Hasher = sha256.Sha256{}
 var shardCoordinator, _ = sharding.NewMultiShardCoordinator(1, 0)
 var addressConverter, _ = addressConverters.NewPlainAddressConverter(32, "0x")
 var GasMap = arwenConfig.MakeGasMap(1)
@@ -60,7 +62,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		StorageService:   CreateStorageService(),
 		BlockChain:       CreateBlockChain(),
 		ShardCoordinator: shardCoordinator,
-		Marshalizer:      marshalizer,
+		Marshalizer:      Marshalizer,
 		Uint64Converter:  uint64ByteSlice.NewBigEndianConverter(),
 	}
 
@@ -74,7 +76,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		return nil, err
 	}
 
-	argsParser, err := smartContract.NewAtArgumentParser()
+	argsParser, err := vmcommon.NewAtArgumentParser()
 	if err != nil {
 		return nil, err
 	}
@@ -87,16 +89,17 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 	scProcessor, err := smartContract.NewSmartContractProcessor(
 		vmContainer,
 		argsParser,
-		hasher,
-		marshalizer,
+		Hasher,
+		Marshalizer,
 		accounts,
 		vmFactory.BlockChainHookImpl(),
 		addressConverter,
 		shardCoordinator,
 		&mock.IntermediateTransactionHandlerMock{},
-		&MyTransactionFeeHandlerStub{},
+		&stubs.MyTransactionFeeHandlerStub{},
 		&mock.FeeHandlerStub{},
 		txTypeHandler,
+		&stubs.MyGasHandlerStub{},
 	)
 	if err != nil {
 		return nil, err
@@ -104,14 +107,14 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 
 	txProcessor, err := transaction.NewTxProcessor(
 		accounts,
-		hasher,
+		Hasher,
 		addressConverter,
-		marshalizer,
+		Marshalizer,
 		shardCoordinator,
 		scProcessor,
-		&MyTransactionFeeHandlerStub{},
+		&stubs.MyTransactionFeeHandlerStub{},
 		txTypeHandler,
-		&MyFeeHandlerStub{},
+		&stubs.MyFeeHandlerStub{},
 	)
 	if err != nil {
 		return nil, err
@@ -156,8 +159,6 @@ func (node *SimpleDebugNode) AddAccountsAccordingToGenesisFile(genesisFile strin
 	return nil
 }
 
-const DefaultRound uint64 = 444
-
 type accountFactory struct {
 }
 
@@ -174,7 +175,7 @@ func (af *accountFactory) IsInterfaceNil() bool {
 }
 
 func CreateEmptyAddress() state.AddressContainer {
-	buff := make([]byte, hasher.Size())
+	buff := make([]byte, Hasher.Size())
 
 	return state.NewAddress(buff)
 }

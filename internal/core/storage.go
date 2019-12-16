@@ -1,53 +1,13 @@
 package core
 
 import (
-	"math/big"
-
 	dataBlock "github.com/ElrondNetwork/elrond-go/data/block"
 	"github.com/ElrondNetwork/elrond-go/data/blockchain"
 	"github.com/ElrondNetwork/elrond-go/dataRetriever"
-	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/storage"
 	"github.com/ElrondNetwork/elrond-go/storage/memorydb"
 	"github.com/ElrondNetwork/elrond-go/storage/storageUnit"
 )
-
-// MyTransactionFeeHandlerStub is a stub.
-type MyTransactionFeeHandlerStub struct {
-}
-
-// ProcessTransactionFee is a stub.
-func (stub *MyTransactionFeeHandlerStub) ProcessTransactionFee(cost *big.Int) {
-}
-
-// IsInterfaceNil is a stub.
-func (stub *MyTransactionFeeHandlerStub) IsInterfaceNil() bool {
-	return false
-}
-
-// MyFeeHandlerStub is a stub.
-type MyFeeHandlerStub struct {
-}
-
-// ComputeGasLimit is a stub.
-func (stub *MyFeeHandlerStub) ComputeGasLimit(tx process.TransactionWithFeeHandler) uint64 {
-	return 0
-}
-
-// ComputeFee is a stub.
-func (stub *MyFeeHandlerStub) ComputeFee(tx process.TransactionWithFeeHandler) *big.Int {
-	return big.NewInt(0)
-}
-
-// CheckValidityTxValues is a stub.
-func (stub *MyFeeHandlerStub) CheckValidityTxValues(tx process.TransactionWithFeeHandler) error {
-	return nil
-}
-
-// IsInterfaceNil is a stub.
-func (stub *MyFeeHandlerStub) IsInterfaceNil() bool {
-	return false
-}
 
 func CreateStorageService() dataRetriever.StorageService {
 	store := dataRetriever.NewChainStorer()
@@ -81,8 +41,8 @@ func CreateBlockChain() *blockchain.BlockChain {
 		badBlockCache,
 	)
 	blockChain.GenesisHeader = &dataBlock.Header{}
-	genesisHeaderM, _ := marshalizer.Marshal(blockChain.GenesisHeader)
+	genesisHeaderM, _ := Marshalizer.Marshal(blockChain.GenesisHeader)
 
-	blockChain.SetGenesisHeaderHash(hasher.Compute(string(genesisHeaderM)))
+	blockChain.SetGenesisHeaderHash(Hasher.Compute(string(genesisHeaderM)))
 	return blockChain
 }
