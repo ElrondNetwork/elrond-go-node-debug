@@ -47,14 +47,13 @@ func handlerRunSmartContract(ginContext *gin.Context) {
 		return
 	}
 
-	returnedData, err := ef.RunSmartContract(*command)
+	result, err := ef.RunSmartContract(*command)
 	if err != nil {
 		returnBadRequest(ginContext, "runSmartContract - actual run", err)
 		return
 	}
 
-	dataEncoded := hex.EncodeToString(returnedData)
-	returnOkResponse(ginContext, dataEncoded)
+	returnOkResponse(ginContext, result)
 }
 
 func createRunCommand(ginContext *gin.Context) (*RunSmartContractCommand, error) {
@@ -96,7 +95,7 @@ func createRunCommand(ginContext *gin.Context) (*RunSmartContractCommand, error)
 }
 
 // RunSmartContract runs a smart contract (a function defined by the smart contract).
-func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) ([]byte, error) {
+func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) (interface{}, error) {
 	if command.OnTestnet {
 		return node.runSmartContractOnTestnet(command)
 	}
@@ -104,19 +103,19 @@ func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) (
 	return node.runSmartContractOnDebugNode(command)
 }
 
-func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractCommand) ([]byte, error) {
+func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractCommand) (sendTransactionResponse, error) {
 	privateKey, _ := readPrivateKeyFromPemText(command.PrivateKey)
 	publicKey, _ := privateKey.GeneratePublic().ToByteArray()
 
 	nonce, err := getNonce(command.TestnetNodeEndpoint, publicKey)
 	if err != nil {
-		return nil, err
+		return sendTransactionResponse{}, err
 	}
 
 	valueAsString := command.Value
 	value, ok := big.NewInt(0).SetString(valueAsString, 10)
 	if !ok {
-		return nil, errors.New("value is not in base 10 format")
+		return sendTransactionResponse{}, errors.New("value is not in base 10 format")
 	}
 
 	tx := &transaction.Transaction{
@@ -130,8 +129,8 @@ func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractC
 	}
 
 	txBuff := signAndStringifyTransaction(tx, privateKey)
-	err = sendTransaction(command.TestnetNodeEndpoint, txBuff)
-	return nil, err
+	response, err := sendTransaction(command.TestnetNodeEndpoint, txBuff)
+	return response, err
 }
 
 func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContractCommand) ([]byte, error) {

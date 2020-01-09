@@ -71,7 +71,7 @@ type sendTransactionResponsePayload struct {
 	Timestamp   uint64   `json:"timestamp"`
 }
 
-func sendTransaction(nodeAPIUrl string, txBuff []byte) error {
+func sendTransaction(nodeAPIUrl string, txBuff []byte) (sendTransactionResponse, error) {
 	url := fmt.Sprintf("%s/transaction/send", nodeAPIUrl)
 	log.Println("sendTransaction, perform POST:")
 	log.Println(url)
@@ -79,7 +79,7 @@ func sendTransaction(nodeAPIUrl string, txBuff []byte) error {
 
 	response, err := http.Post(url, "application/json", bytes.NewBuffer(txBuff))
 	if err != nil {
-		return err
+		return sendTransactionResponse{}, err
 	}
 
 	defer response.Body.Close()
@@ -88,7 +88,7 @@ func sendTransaction(nodeAPIUrl string, txBuff []byte) error {
 	fmt.Println(string(body))
 	structuredResponse := sendTransactionResponse{}
 	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&structuredResponse)
-	return err
+	return structuredResponse, err
 }
 
 type jsonFriendlyTransaction struct {

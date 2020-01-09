@@ -142,18 +142,18 @@ func (ef *NodeDebugFacade) StatusMetrics() external.StatusMetricsHandler {
 	return ef.debugNode.APIResolver.StatusMetrics()
 }
 
-// ExecuteQuery retrieves data from existing SC trie
+// ExecuteSCQuery retrieves data from existing SC trie
 func (ef *NodeDebugFacade) ExecuteSCQuery(query *process.SCQuery) (*vmcommon.VMOutput, error) {
 	return ef.debugNode.APIResolver.ExecuteSCQuery(query)
 }
 
-// RunSmartContract deploys a smart contract.
+// DeploySmartContract deploys a smart contract.
 func (ef *NodeDebugFacade) DeploySmartContract(command DeploySmartContractCommand) ([]byte, error) {
 	return ef.debugNode.DeploySmartContract(command)
 }
 
 // RunSmartContract runs a smart contract function.
-func (ef *NodeDebugFacade) RunSmartContract(command RunSmartContractCommand) ([]byte, error) {
+func (ef *NodeDebugFacade) RunSmartContract(command RunSmartContractCommand) (interface{}, error) {
 	return ef.debugNode.RunSmartContract(command)
 }
 

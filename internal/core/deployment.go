@@ -128,7 +128,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 	}
 
 	txBuff := signAndStringifyTransaction(tx, privateKey)
-	err = sendTransaction(command.TestnetNodeEndpoint, txBuff)
+	_, err = sendTransaction(command.TestnetNodeEndpoint, txBuff)
 	return resultingAddress, err
 }
 

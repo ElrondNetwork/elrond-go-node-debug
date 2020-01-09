@@ -11,7 +11,7 @@ import (
 type FacadeHandler interface {
 	ExecuteSCQuery(query *process.SCQuery) (*vmcommon.VMOutput, error)
 	DeploySmartContract(command DeploySmartContractCommand) ([]byte, error)
-	RunSmartContract(command RunSmartContractCommand) ([]byte, error)
+	RunSmartContract(command RunSmartContractCommand) (interface{}, error)
 }
 
 // RegisterRoutes defines address related routes
