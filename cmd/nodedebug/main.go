@@ -106,19 +106,9 @@ func startDebugNode(ctx *cli.Context) error {
 		return err
 	}
 
-	var workingDir = ""
-	if ctx.IsSet(workingDirectory.Name) {
-		workingDir = ctx.GlobalString(workingDirectory.Name)
-	} else {
-		workingDir, err = os.Getwd()
-		if err != nil {
-			log.LogIfError(err)
-			workingDir = ""
-		}
-	}
-	log.Trace("working directory", "path", workingDir)
+	var workingDir, _ = os.Getwd()
 
-	var shardId = core.GetShardIdString(shardCoordinator.SelfId())
+	var shardId = core.GetShardIdString(0)
 
 	defaultDBPath := "db"
 	defaultEpochString := "Epoch"
