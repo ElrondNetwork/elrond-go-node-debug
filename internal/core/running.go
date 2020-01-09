@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ElrondNetwork/arwen-wasm-vm/arwen/debugging"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -133,7 +135,7 @@ func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractC
 	return response, err
 }
 
-func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContractCommand) ([]byte, error) {
+func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContractCommand) (*vmcommon.VMOutput, error) {
 	accAddress, err := node.AddressConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
 		return nil, err
@@ -177,5 +179,6 @@ func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContrac
 		return nil, err
 	}
 
-	return node.Accounts.Commit()
+	vmOutput := debugging.GlobalTrace.LatestVMOutput
+	return vmOutput, nil
 }
