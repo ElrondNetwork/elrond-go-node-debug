@@ -119,7 +119,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		SndAddr:  publicKey,
 		GasLimit: command.GasLimit,
 		GasPrice: command.GasPrice,
-		Data:     command.TxData,
+		Data:     []byte(command.TxData),
 	}
 
 	resultingAddress, err := node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(publicKey, nonce, factory.ArwenVirtualMachine)
@@ -127,7 +127,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		return nil, err
 	}
 
-	txBuff := signAndstringifyTransaction(tx, privateKey)
+	txBuff := signAndStringifyTransaction(tx, privateKey)
 	err = sendTransaction(command.TestnetNodeEndpoint, txBuff)
 	return resultingAddress, err
 }
@@ -161,7 +161,7 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 		SndAddr:  []byte(command.SndAddress),
 		GasLimit: command.GasLimit,
 		GasPrice: command.GasPrice,
-		Data:     command.TxData,
+		Data:     []byte(command.TxData),
 	}
 
 	err = node.TxProcessor.ProcessTransaction(tx)

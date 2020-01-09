@@ -115,6 +115,8 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		&stubs.MyTransactionFeeHandlerStub{},
 		txTypeHandler,
 		&stubs.MyFeeHandlerStub{},
+		&mock.IntermediateTransactionHandlerMock{},
+		&mock.IntermediateTransactionHandlerMock{},
 	)
 	if err != nil {
 		return nil, err

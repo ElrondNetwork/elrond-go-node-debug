@@ -102,7 +102,7 @@ type jsonFriendlyTransaction struct {
 	Signature string   `json:"signature"`
 }
 
-func signAndstringifyTransaction(tx *transaction.Transaction, privateKey crypto.PrivateKey) []byte {
+func signAndStringifyTransaction(tx *transaction.Transaction, privateKey crypto.PrivateKey) []byte {
 	txBuff, _ := marshal.JsonMarshalizer{}.Marshal(tx)
 	signer := &singlesig.SchnorrSigner{}
 	tx.Signature, _ = signer.Sign(privateKey, txBuff)
@@ -114,7 +114,7 @@ func signAndstringifyTransaction(tx *transaction.Transaction, privateKey crypto.
 	jsonFriendlyTx.Sender = hex.EncodeToString(tx.SndAddr)
 	jsonFriendlyTx.GasPrice = tx.GasPrice
 	jsonFriendlyTx.GasLimit = tx.GasLimit
-	jsonFriendlyTx.Data = tx.Data
+	jsonFriendlyTx.Data = string(tx.Data)
 	jsonFriendlyTx.Signature = hex.EncodeToString(tx.Signature)
 
 	jsonFriendlyTxBuff, _ := marshal.JsonMarshalizer{}.Marshal(jsonFriendlyTx)

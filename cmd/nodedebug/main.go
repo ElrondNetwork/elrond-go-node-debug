@@ -5,13 +5,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"sync"
 	"syscall"
 
 	debugCore "github.com/ElrondNetwork/elrond-go-node-debug/internal/core"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/core/stubs"
 	"github.com/ElrondNetwork/elrond-go/cmd/node/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core"
@@ -105,20 +105,7 @@ func startDebugNode(ctx *cli.Context) error {
 		return err
 	}
 
-	var workingDir = ""
-	workingDir, err = os.Getwd()
-	if err != nil {
-		log.Println(err)
-		workingDir = ""
-	}
-
-	uniqueDBFolder := filepath.Join(
-		workingDir,
-		"defaultDBPath",
-		fmt.Sprintf("%s_%d", "0", 0),
-		fmt.Sprintf("%s_%d", "0", 0))
-
-	coreArgs := factory.NewCoreComponentsFactoryArgs(generalConfig, uniqueDBFolder)
+	coreArgs := factory.NewCoreComponentsFactoryArgs(generalConfig, &stubs.MyPathManagerHandlerStub{}, "0", make([]byte, 32))
 	coreComponents, err := factory.CoreComponentsFactory(coreArgs)
 	if err != nil {
 		fmt.Println("error creating core components " + err.Error())

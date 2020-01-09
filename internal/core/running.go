@@ -126,10 +126,10 @@ func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractC
 		SndAddr:  publicKey,
 		GasPrice: command.GasPrice,
 		GasLimit: command.GasLimit,
-		Data:     command.TxData,
+		Data:     []byte(command.TxData),
 	}
 
-	txBuff := signAndstringifyTransaction(tx, privateKey)
+	txBuff := signAndStringifyTransaction(tx, privateKey)
 	err = sendTransaction(command.TestnetNodeEndpoint, txBuff)
 	return nil, err
 }
@@ -164,15 +164,13 @@ func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContrac
 	}
 
 	tx := &transaction.Transaction{
-		Nonce:     account.GetNonce(),
-		Value:     value,
-		RcvAddr:   command.ScAddress,
-		SndAddr:   command.SndAddress,
-		GasPrice:  command.GasPrice,
-		GasLimit:  command.GasLimit,
-		Data:      command.TxData,
-		Signature: nil,
-		Challenge: nil,
+		Nonce:    account.GetNonce(),
+		Value:    value,
+		RcvAddr:  command.ScAddress,
+		SndAddr:  command.SndAddress,
+		GasPrice: command.GasPrice,
+		GasLimit: command.GasLimit,
+		Data:     []byte(command.TxData),
 	}
 
 	err = node.TxProcessor.ProcessTransaction(tx)

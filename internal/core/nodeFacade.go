@@ -118,21 +118,6 @@ func (ef *NodeDebugFacade) RestApiPort() string {
 	return ef.config.RestApiInterface
 }
 
-// PrometheusMonitoring returns if prometheus is enabled for monitoring by the flag
-func (ef *NodeDebugFacade) PrometheusMonitoring() bool {
-	return ef.config.Prometheus
-}
-
-// PrometheusJoinURL will return the join URL from server.toml
-func (ef *NodeDebugFacade) PrometheusJoinURL() string {
-	return ef.config.PrometheusJoinURL
-}
-
-// PrometheusNetworkID will return the NetworkID from config.toml or the flag
-func (ef *NodeDebugFacade) PrometheusNetworkID() string {
-	return ef.config.PrometheusJobName
-}
-
 func (ef *NodeDebugFacade) startRest(wg *sync.WaitGroup) {
 	defer wg.Done()
 
