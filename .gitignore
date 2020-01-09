@@ -20,5 +20,4 @@ bin/
 internal/core/trace/*
 cmd/nodedebug/nodedebug
 cmd/nodedebug/defaultDBPath/*
-cmd/nodedebug/trace/*
 sandbox/node_modules

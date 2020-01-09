@@ -204,7 +204,7 @@ func transferToken(t *testing.T, context *testContext, scAddress []byte, transfe
 		SndAddr:  from,
 		GasPrice: 1,
 		GasLimit: 500000,
-		Data:     txData,
+		Data:     []byte(txData),
 	}
 
 	err := context.Node.TxProcessor.ProcessTransaction(tx)

@@ -5,18 +5,19 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"sync"
 	"syscall"
 
 	debugCore "github.com/ElrondNetwork/elrond-go-node-debug/internal/core"
-	"github.com/ElrondNetwork/elrond-go-node-debug/internal/core/stubs"
 	"github.com/ElrondNetwork/elrond-go/cmd/node/factory"
 	"github.com/ElrondNetwork/elrond-go/config"
 	"github.com/ElrondNetwork/elrond-go/core"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	factoryState "github.com/ElrondNetwork/elrond-go/data/state/factory"
+	"github.com/ElrondNetwork/elrond-go/storage/pathmanager"
 	"github.com/urfave/cli"
 )
 
@@ -105,7 +106,48 @@ func startDebugNode(ctx *cli.Context) error {
 		return err
 	}
 
-	coreArgs := factory.NewCoreComponentsFactoryArgs(generalConfig, &stubs.MyPathManagerHandlerStub{}, "0", make([]byte, 32))
+	var workingDir = ""
+	if ctx.IsSet(workingDirectory.Name) {
+		workingDir = ctx.GlobalString(workingDirectory.Name)
+	} else {
+		workingDir, err = os.Getwd()
+		if err != nil {
+			log.LogIfError(err)
+			workingDir = ""
+		}
+	}
+	log.Trace("working directory", "path", workingDir)
+
+	var shardId = core.GetShardIdString(shardCoordinator.SelfId())
+
+	defaultDBPath := "db"
+	defaultEpochString := "Epoch"
+	defaultStaticDbString := "Static"
+	defaultShardString := "Shard"
+	chainID := "undefined"
+
+	pathTemplateForPruningStorer := filepath.Join(
+		workingDir,
+		defaultDBPath,
+		chainID,
+		fmt.Sprintf("%s_%s", defaultEpochString, core.PathEpochPlaceholder),
+		fmt.Sprintf("%s_%s", defaultShardString, core.PathShardPlaceholder),
+		core.PathIdentifierPlaceholder)
+
+	pathTemplateForStaticStorer := filepath.Join(
+		workingDir,
+		defaultDBPath,
+		chainID,
+		defaultStaticDbString,
+		fmt.Sprintf("%s_%s", defaultShardString, core.PathShardPlaceholder),
+		core.PathIdentifierPlaceholder)
+
+	pathManager, err := pathmanager.NewPathManager(pathTemplateForPruningStorer, pathTemplateForStaticStorer)
+	if err != nil {
+		return err
+	}
+
+	coreArgs := factory.NewCoreComponentsFactoryArgs(generalConfig, pathManager, shardId, []byte(chainID))
 	coreComponents, err := factory.CoreComponentsFactory(coreArgs)
 	if err != nil {
 		fmt.Println("error creating core components " + err.Error())
