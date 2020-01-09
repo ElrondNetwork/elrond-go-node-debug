@@ -106,8 +106,15 @@ func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) (
 }
 
 func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractCommand) (sendTransactionResponse, error) {
-	privateKey, _ := readPrivateKeyFromPemText(command.PrivateKey)
-	publicKey, _ := privateKey.GeneratePublic().ToByteArray()
+	privateKey, err := readPrivateKeyFromPemText(command.PrivateKey)
+	if err != nil {
+		return sendTransactionResponse{}, err
+	}
+
+	publicKey, err := privateKey.GeneratePublic().ToByteArray()
+	if err != nil {
+		return sendTransactionResponse{}, err
+	}
 
 	nonce, err := getNonce(command.TestnetNodeEndpoint, publicKey)
 	if err != nil {

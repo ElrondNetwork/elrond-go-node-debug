@@ -25,8 +25,11 @@ func readPrivateKeyFromPemText(pemText string) (crypto.PrivateKey, error) {
 	suite := kyber.NewBlakeSHA256Ed25519()
 	keyGenerator := signing.NewKeyGenerator(suite)
 	keyBlock, _ := pem.Decode([]byte(pemText))
-	keyBytes := keyBlock.Bytes
+	if keyBlock == nil {
+		return nil, fmt.Errorf("bad pem text")
+	}
 
+	keyBytes := keyBlock.Bytes
 	keyBytesDecoded, err := hex.DecodeString(string(keyBytes))
 	if err != nil {
 		return nil, err
