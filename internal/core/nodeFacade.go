@@ -5,16 +5,13 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/ElrondNetwork/elrond-go/node/heartbeat"
 	"github.com/ElrondNetwork/elrond-go/process"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/prometheus/common/log"
 
 	"github.com/ElrondNetwork/elrond-go/api/middleware"
 	"github.com/ElrondNetwork/elrond-go/config"
-	"github.com/ElrondNetwork/elrond-go/core/statistics"
 	"github.com/ElrondNetwork/elrond-go/node/external"
-	"github.com/ElrondNetwork/elrond-go/ntp"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,18 +25,8 @@ const DefaultRestPortOff = "off"
 // NodeDebugFacade represents a facade for grouping the functionality for node, transaction and address
 type NodeDebugFacade struct {
 	debugNode              *SimpleDebugNode
-	syncer                 ntp.SyncTimer
-	tpsBenchmark           *statistics.TpsBenchmark
 	config                 *config.FacadeConfig
 	restAPIServerDebugMode bool
-}
-
-func (ef *NodeDebugFacade) GetCurrentPublicKey() string {
-	return ""
-}
-
-func (ef *NodeDebugFacade) GetHeartbeats() ([]heartbeat.PubKeyHeartbeat, error) {
-	return nil, nil
 }
 
 // NewNodeDebugFacade creates a new Facade with a NodeWrapper
@@ -48,21 +35,6 @@ func NewNodeDebugFacade(debugNode *SimpleDebugNode, restAPIServerDebugMode bool)
 		debugNode:              debugNode,
 		restAPIServerDebugMode: restAPIServerDebugMode,
 	}
-}
-
-// SetSyncer sets the current syncer
-func (ef *NodeDebugFacade) SetSyncer(syncer ntp.SyncTimer) {
-	ef.syncer = syncer
-}
-
-// SetTpsBenchmark sets the tps benchmark handler
-func (ef *NodeDebugFacade) SetTpsBenchmark(tpsBenchmark *statistics.TpsBenchmark) {
-	ef.tpsBenchmark = tpsBenchmark
-}
-
-// TpsBenchmark returns the tps benchmark handler
-func (ef *NodeDebugFacade) TpsBenchmark() *statistics.TpsBenchmark {
-	return ef.tpsBenchmark
 }
 
 // SetConfig sets the configuration options for the facade
