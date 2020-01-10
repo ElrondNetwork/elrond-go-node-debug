@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -88,18 +89,25 @@ func sendTransaction(nodeAPIUrl string, txBuff []byte) (sendTransactionResponse,
 	fmt.Println(string(body))
 	structuredResponse := sendTransactionResponse{}
 	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&structuredResponse)
-	return structuredResponse, err
+	if err != nil {
+		return sendTransactionResponse{}, err
+	}
+	if len(structuredResponse.Error) > 0 {
+		return sendTransactionResponse{}, fmt.Errorf(structuredResponse.Error)
+	}
+
+	return structuredResponse, nil
 }
 
 type jsonFriendlyTransaction struct {
-	Nonce     uint64   `json:"nonce"`
-	Value     *big.Int `json:"value"`
-	Receiver  string   `json:"receiver"`
-	Sender    string   `json:"sender"`
-	GasPrice  uint64   `json:"gasPrice"`
-	GasLimit  uint64   `json:"gasLimit"`
-	Data      string   `json:"data"`
-	Signature string   `json:"signature"`
+	Nonce     uint64 `json:"nonce"`
+	Value     string `json:"value"`
+	Receiver  string `json:"receiver"`
+	Sender    string `json:"sender"`
+	GasPrice  uint64 `json:"gasPrice"`
+	GasLimit  uint64 `json:"gasLimit"`
+	Data      string `json:"data"`
+	Signature string `json:"signature"`
 }
 
 func signAndStringifyTransaction(tx *transaction.Transaction, privateKey crypto.PrivateKey) []byte {
@@ -109,12 +117,12 @@ func signAndStringifyTransaction(tx *transaction.Transaction, privateKey crypto.
 
 	jsonFriendlyTx := &jsonFriendlyTransaction{}
 	jsonFriendlyTx.Nonce = tx.Nonce
-	jsonFriendlyTx.Value = tx.Value
+	jsonFriendlyTx.Value = tx.Value.String()
 	jsonFriendlyTx.Receiver = hex.EncodeToString(tx.RcvAddr)
 	jsonFriendlyTx.Sender = hex.EncodeToString(tx.SndAddr)
 	jsonFriendlyTx.GasPrice = tx.GasPrice
 	jsonFriendlyTx.GasLimit = tx.GasLimit
-	jsonFriendlyTx.Data = string(tx.Data)
+	jsonFriendlyTx.Data = base64.StdEncoding.EncodeToString(tx.Data)
 	jsonFriendlyTx.Signature = hex.EncodeToString(tx.Signature)
 
 	jsonFriendlyTxBuff, _ := marshal.JsonMarshalizer{}.Marshal(jsonFriendlyTx)
