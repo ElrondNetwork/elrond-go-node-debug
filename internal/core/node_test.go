@@ -33,7 +33,7 @@ func Test_C_ERC20(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/wrc20_arwen_c.wasm")
 
-	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -72,7 +72,7 @@ func Test_SOL_ERC20_0_0_3(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
-	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -92,7 +92,7 @@ func Test_SOL_ERC20_0_0_3(t *testing.T) {
 func Test_NoPanic_WhenBadCode(t *testing.T) {
 	context := setupTestContext(t)
 
-	_, _ = context.Node.DeploySmartContract(DeploySmartContractCommand{
+	_, _, _ = context.Node.DeploySmartContract(DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -105,7 +105,7 @@ func Test_NoPanic_SOL_WhenBadFunction(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
-	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -139,7 +139,7 @@ func Test_NoPanic_SOL_WhenBadArgumens(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
-	scAddress, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,

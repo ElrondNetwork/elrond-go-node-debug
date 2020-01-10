@@ -120,7 +120,7 @@ func (ef *NodeDebugFacade) ExecuteSCQuery(query *process.SCQuery) (*vmcommon.VMO
 }
 
 // DeploySmartContract deploys a smart contract.
-func (ef *NodeDebugFacade) DeploySmartContract(command DeploySmartContractCommand) ([]byte, error) {
+func (ef *NodeDebugFacade) DeploySmartContract(command DeploySmartContractCommand) ([]byte, interface{}, error) {
 	return ef.debugNode.DeploySmartContract(command)
 }
 

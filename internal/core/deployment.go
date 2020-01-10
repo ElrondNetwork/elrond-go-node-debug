@@ -24,7 +24,7 @@ type DeploySCRequest struct {
 	TxData              string `form:"txData" json:"txData"`
 }
 
-// DeploySmartContractCommand represents the command for deploying a smart contract.
+// DeploySmartContractCommand represents the command for deploying a smart contract
 type DeploySmartContractCommand struct {
 	OnTestnet           bool
 	PrivateKey          string
@@ -37,6 +37,12 @@ type DeploySmartContractCommand struct {
 	TxData              string
 }
 
+// DeploySmartContractResponse represents the reponse for deploying a smart contract
+type DeploySmartContractResponse struct {
+	Address string
+	Other   interface{}
+}
+
 func handlerDeploySmartContract(ginContext *gin.Context) {
 	ef, _ := ginContext.MustGet("elrondFacade").(FacadeHandler)
 
@@ -46,14 +52,18 @@ func handlerDeploySmartContract(ginContext *gin.Context) {
 		return
 	}
 
-	scAddress, err := ef.DeploySmartContract(*command)
+	scAddress, otherData, err := ef.DeploySmartContract(*command)
 	if err != nil {
 		returnBadRequest(ginContext, "deploySmartContract - actual deploy", err)
 		return
 	}
 
-	scAddressEncoded := hex.EncodeToString(scAddress)
-	returnOkResponse(ginContext, scAddressEncoded)
+	response := DeploySmartContractResponse{
+		Address: hex.EncodeToString(scAddress),
+		Other:   otherData,
+	}
+
+	returnOkResponse(ginContext, response)
 }
 
 func createDeployCommand(ginContext *gin.Context) (*DeploySmartContractCommand, error) {
@@ -89,7 +99,7 @@ func createDeployCommand(ginContext *gin.Context) (*DeploySmartContractCommand, 
 }
 
 // DeploySmartContract deploys a smart contract (with its code).
-func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractCommand) ([]byte, error) {
+func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractCommand) ([]byte, interface{}, error) {
 	if command.OnTestnet {
 		return node.deploySmartContractOnTestnet(command)
 	}
@@ -97,19 +107,26 @@ func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractComm
 	return node.deploySmartContractOnDebugNode(command)
 }
 
-func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartContractCommand) ([]byte, error) {
-	privateKey, _ := readPrivateKeyFromPemText(command.PrivateKey)
-	publicKey, _ := privateKey.GeneratePublic().ToByteArray()
+func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartContractCommand) ([]byte, interface{}, error) {
+	privateKey, err := readPrivateKeyFromPemText(command.PrivateKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	publicKey, err := privateKey.GeneratePublic().ToByteArray()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	nonce, err := getNonce(command.TestnetNodeEndpoint, publicKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	valueAsString := command.Value
 	value, ok := big.NewInt(0).SetString(valueAsString, 10)
 	if !ok {
-		return nil, errors.New("value is not in base 10 format")
+		return nil, nil, errors.New("value is not in base 10 format")
 	}
 
 	tx := &transaction.Transaction{
@@ -124,34 +141,38 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 
 	resultingAddress, err := node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(publicKey, nonce, factory.ArwenVirtualMachine)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	txBuff := signAndStringifyTransaction(tx, privateKey)
-	_, err = sendTransaction(command.TestnetNodeEndpoint, txBuff)
-	return resultingAddress, err
+	sendTransactionResponse, err := sendTransaction(command.TestnetNodeEndpoint, txBuff)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return resultingAddress, sendTransactionResponse, err
 }
 
-func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartContractCommand) ([]byte, error) {
+func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartContractCommand) ([]byte, interface{}, error) {
 	accAddress, err := node.AddressConverter.CreateAddressFromPublicKeyBytes([]byte(command.SndAddress))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	account, err := node.Accounts.GetAccountWithJournal(accAddress)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	resultingAddress, err := node.BlockChainHook.(vmcommon.BlockchainHook).NewAddress(command.SndAddress, account.GetNonce(), factory.ArwenVirtualMachine)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	valueAsString := command.Value
 	value, ok := big.NewInt(0).SetString(valueAsString, 10)
 	if !ok {
-		return nil, errors.New("value is not in base 10 format")
+		return nil, nil, errors.New("value is not in base 10 format")
 	}
 
 	tx := &transaction.Transaction{
@@ -166,13 +187,13 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 
 	err = node.TxProcessor.ProcessTransaction(tx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	_, err = node.Accounts.Commit()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return resultingAddress, nil
+	return resultingAddress, nil, nil
 }

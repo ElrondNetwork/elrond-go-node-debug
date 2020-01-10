@@ -10,7 +10,7 @@ import (
 // FacadeHandler interface defines methods that can be used from `elrondFacade` context variable
 type FacadeHandler interface {
 	ExecuteSCQuery(query *process.SCQuery) (*vmcommon.VMOutput, error)
-	DeploySmartContract(command DeploySmartContractCommand) ([]byte, error)
+	DeploySmartContract(command DeploySmartContractCommand) ([]byte, interface{}, error)
 	RunSmartContract(command RunSmartContractCommand) (interface{}, error)
 }
 
