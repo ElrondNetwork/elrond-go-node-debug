@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/hex"
+	"io/ioutil"
 	"math/big"
 	"testing"
 
@@ -8,40 +10,43 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_GetNonce(t *testing.T) {
-	url := ""
-	address := []byte{}
-	nonce, err := getNonce(url, address)
+const proxyURL = "http://127.0.0.1:8001"
+const ownerAddress = "8eb27b2bcaedc6de11793cf0625a4f8d64bf7ac84753a0b6c5d6ceb2be7eb39d"
 
+func Test_GetNonce(t *testing.T) {
+	address, _ := hex.DecodeString(ownerAddress)
+	nonce, err := getNonce(proxyURL, address)
 	require.Nil(t, err)
-	require.GreaterOrEqual(t, 0, nonce)
+	require.GreaterOrEqual(t, nonce, uint64(0))
 }
 
-func Test_SendTransaction(t *testing.T) {
-	url := ""
-	pemString := ""
-	scAddress := []byte{}
-
-	privateKey, err := readPrivateKeyFromPemText(pemString)
+func Test_SendDeployTransaction(t *testing.T) {
+	privateKey, err := readPrivateKeyFromPemText(getPemString())
 	require.Nil(t, err)
 	publicKey, err := privateKey.GeneratePublic().ToByteArray()
 	require.Nil(t, err)
-	nonce, err := getNonce(url, publicKey)
+	nonce, err := getNonce(proxyURL, publicKey)
 	require.Nil(t, err)
-
 	tx := &transaction.Transaction{
 		Nonce:    nonce,
 		Value:    big.NewInt(0),
-		RcvAddr:  scAddress,
+		RcvAddr:  CreateEmptyAddress().Bytes(),
 		SndAddr:  publicKey,
-		GasPrice: 10,
-		GasLimit: 50000,
+		GasPrice: 100000000000000,
+		GasLimit: 500000,
 		Data:     []byte("test"),
 	}
-
 	txBuff := signAndStringifyTransaction(tx, privateKey)
-	response, err := sendTransaction(url, txBuff)
-
+	response, err := sendTransaction(proxyURL, txBuff)
 	require.Nil(t, err)
 	require.NotNil(t, response)
+}
+
+func Test_QueryVariable(t *testing.T) {
+
+}
+
+func getPemString() string {
+	pemString, _ := ioutil.ReadFile("./testdata/test.pem")
+	return string(pemString)
 }

@@ -58,20 +58,32 @@ func handlerExecuteQuery(context *gin.Context) {
 }
 
 func doExecuteQuery(context *gin.Context) (*vmcommon.VMOutput, error) {
-	facade, _ := context.MustGet("elrondFacade").(FacadeHandler)
-
 	request := VMValueRequest{}
 	err := context.ShouldBindJSON(&request)
 	if err != nil {
 		return nil, err
 	}
 
-	command, err := createSCQuery(&request)
+	query, err := createSCQuery(request)
 	if err != nil {
 		return nil, err
 	}
 
-	vmOutput, err := facade.ExecuteSCQuery(command)
+	if request.OnTestnet {
+		return doExecuteQueryOnTestnet(request)
+	}
+
+	return doExecuteQueryOnDebugNode(context, query)
+
+}
+
+func doExecuteQueryOnTestnet(request VMValueRequest) (*vmcommon.VMOutput, error) {
+	return querySC(request.TestnetNodeEndpoint, request)
+}
+
+func doExecuteQueryOnDebugNode(context *gin.Context, query *process.SCQuery) (*vmcommon.VMOutput, error) {
+	facade, _ := context.MustGet("elrondFacade").(FacadeHandler)
+	vmOutput, err := facade.ExecuteSCQuery(query)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +91,7 @@ func doExecuteQuery(context *gin.Context) (*vmcommon.VMOutput, error) {
 	return vmOutput, nil
 }
 
-func createSCQuery(request *VMValueRequest) (*process.SCQuery, error) {
+func createSCQuery(request VMValueRequest) (*process.SCQuery, error) {
 	decodedAddress, err := hex.DecodeString(request.ScAddress)
 	if err != nil {
 		return nil, fmt.Errorf("'%s' is not a valid hex string: %s", request.ScAddress, err.Error())

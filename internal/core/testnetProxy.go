@@ -15,10 +15,12 @@ import (
 	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber/singlesig"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/marshal"
+	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 )
 
 type addressResource struct {
 	Account *accountResource `json:"account"`
+	Error   string           `json:"error"`
 }
 
 type accountResource struct {
@@ -37,11 +39,22 @@ func getNonce(nodeAPIUrl string, senderAddress []byte) (uint64, error) {
 	}
 
 	defer response.Body.Close()
-	body, _ := ioutil.ReadAll(response.Body)
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return 0, err
+	}
+
 	fmt.Println("Response:")
 	fmt.Println(string(body))
-	address := addressResource{}
+	address := addressResource{Account: &accountResource{}}
 	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&address)
+	if err != nil {
+		return 0, err
+	}
+	if len(address.Error) > 0 {
+		return 0, fmt.Errorf(address.Error)
+	}
+
 	nonce := address.Account.Nonce
 	fmt.Println("Nonce:")
 	fmt.Println(nonce)
@@ -128,4 +141,30 @@ func signAndStringifyTransaction(tx *transaction.Transaction, privateKey crypto.
 	jsonFriendlyTxBuff, _ := marshal.JsonMarshalizer{}.Marshal(jsonFriendlyTx)
 
 	return jsonFriendlyTxBuff
+}
+
+func querySC(nodeAPIUrl string, request VMValueRequest) (*vmcommon.VMOutput, error) {
+	url := fmt.Sprintf("%s/vm-values/hex", nodeAPIUrl)
+
+	queryBuff, _ := marshal.JsonMarshalizer{}.Marshal(request)
+	log.Println("querySC, perform POST:")
+	log.Println(url)
+	log.Println(string(queryBuff))
+
+	response, err := http.Post(url, "application/json", bytes.NewBuffer(queryBuff))
+	if err != nil {
+		return nil, err
+	}
+
+	defer response.Body.Close()
+	body, _ := ioutil.ReadAll(response.Body)
+	fmt.Println("Response:")
+	fmt.Println(string(body))
+	structuredResponse := vmcommon.VMOutput{}
+	err = json.NewDecoder(bytes.NewBuffer(body)).Decode(&structuredResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &structuredResponse, nil
 }
