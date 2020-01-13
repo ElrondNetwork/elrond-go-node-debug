@@ -144,7 +144,7 @@ func signAndStringifyTransaction(tx *transaction.Transaction, privateKey crypto.
 }
 
 func querySC(nodeAPIUrl string, request VMValueRequest) (*vmcommon.VMOutput, error) {
-	url := fmt.Sprintf("%s/vm-values/hex", nodeAPIUrl)
+	url := fmt.Sprintf("%s/vm-values/query", nodeAPIUrl)
 
 	queryBuff, _ := marshal.JsonMarshalizer{}.Marshal(request)
 	log.Println("querySC, perform POST:")

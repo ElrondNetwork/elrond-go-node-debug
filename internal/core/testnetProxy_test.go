@@ -43,7 +43,15 @@ func Test_SendDeployTransaction(t *testing.T) {
 }
 
 func Test_QueryVariable(t *testing.T) {
+	vmOutput, err := querySC(proxyURL, VMValueRequest{
+		ScAddress: "00000000000000000500086444727b33581181388f6d62a3b3114feeca60b39d",
+		FuncName:  "balanceOf",
+		Args:      []string{ownerAddress},
+	})
 
+	require.Nil(t, err)
+	require.NotNil(t, vmOutput)
+	require.Equal(t, 0, int(vmOutput.ReturnCode))
 }
 
 func getPemString() string {
