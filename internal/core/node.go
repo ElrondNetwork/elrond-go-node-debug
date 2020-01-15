@@ -1,16 +1,15 @@
 package core
 
 import (
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"math"
-	"math/big"
 
 	arwenConfig "github.com/ElrondNetwork/arwen-wasm-vm/config"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/myaccounts"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/mystorage"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/shared"
 	"github.com/ElrondNetwork/elrond-go-node-debug/internal/stubs"
 	"github.com/ElrondNetwork/elrond-go/data/state"
-	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 	"github.com/ElrondNetwork/elrond-go/data/typeConverters/uint64ByteSlice"
 	"github.com/ElrondNetwork/elrond-go/facade"
 	"github.com/ElrondNetwork/elrond-go/hashing/sha256"
@@ -31,7 +30,6 @@ import (
 var Marshalizer = &marshal.JsonMarshalizer{}
 var Hasher = sha256.Sha256{}
 var shardCoordinator, _ = sharding.NewMultiShardCoordinator(1, 0)
-var addressConverter, _ = addressConverters.NewPlainAddressConverter(32, "0x")
 var GasMap = arwenConfig.MakeGasMap(1)
 
 type SimpleDebugNode struct {
@@ -53,14 +51,14 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		Accounts:         accounts,
 		TxProcessor:      nil,
 		BlockChainHook:   nil,
-		AddressConverter: addressConverter,
+		AddressConverter: shared.AddressConverter,
 	}
 
 	argBlockChainHook := hooks.ArgBlockChainHook{
 		Accounts:         accounts,
-		AddrConv:         addressConverter,
-		StorageService:   CreateStorageService(),
-		BlockChain:       CreateBlockChain(),
+		AddrConv:         shared.AddressConverter,
+		StorageService:   mystorage.CreateStorageService(),
+		BlockChain:       mystorage.CreateBlockChain(),
 		ShardCoordinator: shardCoordinator,
 		Marshalizer:      Marshalizer,
 		Uint64Converter:  uint64ByteSlice.NewBigEndianConverter(),
@@ -81,7 +79,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		return nil, err
 	}
 
-	txTypeHandler, err := coordinator.NewTxTypeHandler(addressConverter, shardCoordinator, accounts)
+	txTypeHandler, err := coordinator.NewTxTypeHandler(shared.AddressConverter, shardCoordinator, accounts)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +91,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		Marshalizer,
 		accounts,
 		vmFactory.BlockChainHookImpl(),
-		addressConverter,
+		shared.AddressConverter,
 		shardCoordinator,
 		&mock.IntermediateTransactionHandlerMock{},
 		&stubs.MyTransactionFeeHandlerStub{},
@@ -108,7 +106,7 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 	txProcessor, err := transaction.NewTxProcessor(
 		accounts,
 		Hasher,
-		addressConverter,
+		shared.AddressConverter,
 		Marshalizer,
 		shardCoordinator,
 		scProcessor,
@@ -155,35 +153,8 @@ func (node *SimpleDebugNode) AddAccountsAccordingToGenesisFile(genesisFile strin
 	}
 
 	for pubKey, value := range mapInValues {
-		_ = CreateAccount(node.Accounts, []byte(pubKey), 0, value)
+		_ = myaccounts.CreateAccount(node.Accounts, []byte(pubKey), 0, value)
 	}
 
 	return nil
-}
-
-type accountFactory struct {
-}
-
-func (af *accountFactory) CreateAccount(address state.AddressContainer, tracker state.AccountTracker) (state.AccountHandler, error) {
-	return state.NewAccount(address, tracker)
-}
-
-// IsInterfaceNil returns true if there is no value under the interface
-func (af *accountFactory) IsInterfaceNil() bool {
-	if af == nil {
-		return true
-	}
-	return false
-}
-
-func CreateAccount(accnts state.AccountsAdapter, pubKey []byte, nonce uint64, balance *big.Int) []byte {
-	fmt.Printf("CreateAccount %s, balance = %s\n", hex.EncodeToString(pubKey), balance.String())
-
-	address, _ := addressConverter.CreateAddressFromPublicKeyBytes(pubKey)
-	account, _ := accnts.GetAccountWithJournal(address)
-	_ = account.(*state.Account).SetNonceWithJournal(nonce)
-	_ = account.(*state.Account).SetBalanceWithJournal(balance)
-
-	hashCreated, _ := accnts.Commit()
-	return hashCreated
 }

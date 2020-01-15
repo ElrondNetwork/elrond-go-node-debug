@@ -9,7 +9,10 @@ import (
 	"github.com/ElrondNetwork/elrond-go/crypto/signing"
 	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber"
 	"github.com/ElrondNetwork/elrond-go/data/state"
+	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 )
+
+var AddressConverter, _ = addressConverters.NewPlainAddressConverter(32, "0x")
 
 // ReadPrivateKeyFromPemText reads a private key from a string
 func ReadPrivateKeyFromPemText(pemText string) (crypto.PrivateKey, error) {

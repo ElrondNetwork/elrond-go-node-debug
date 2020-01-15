@@ -72,14 +72,14 @@ func doExecuteQuery(context *gin.Context) (*vmcommon.VMOutput, error) {
 	}
 
 	if request.OnTestnet {
-		return doExecuteQueryOnTestnet(request)
+		return DoExecuteQueryOnTestnet(request)
 	}
 
 	return doExecuteQueryOnDebugNode(context, query)
 
 }
 
-func doExecuteQueryOnTestnet(request VMValueRequest) (*vmcommon.VMOutput, error) {
+func DoExecuteQueryOnTestnet(request VMValueRequest) (*vmcommon.VMOutput, error) {
 	testnetProxy := testnet.NewProxy(request.TestnetNodeEndpoint)
 	return testnetProxy.QuerySC(testnet.SCQueryRequest{
 		ScAddress: request.ScAddress,

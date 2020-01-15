@@ -1,4 +1,4 @@
-package testnet
+package integrationtests
 
 import (
 	"encoding/hex"
@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-node-debug/internal/shared"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/testnet"
 	"github.com/ElrondNetwork/elrond-go/crypto"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/stretchr/testify/require"
@@ -15,7 +16,7 @@ import (
 const proxyURL = "http://127.0.0.1:8001"
 
 func TestProxy_GetNonce(t *testing.T) {
-	proxy := NewProxy(proxyURL)
+	proxy := testnet.NewProxy(proxyURL)
 	owner := getOwnerAddressAsBytes()
 	nonce, err := proxy.GetNonce(owner)
 	require.Nil(t, err)
@@ -23,7 +24,7 @@ func TestProxy_GetNonce(t *testing.T) {
 }
 
 func TestProxy_SendTransactionShouldWork(t *testing.T) {
-	proxy := NewProxy(proxyURL)
+	proxy := testnet.NewProxy(proxyURL)
 	owner := getOwnerAddressAsBytes()
 	privateKey := getOwnerPrivateKey()
 	nonce, err := proxy.GetNonce(owner)
@@ -47,7 +48,7 @@ func TestProxy_SendTransactionShouldWork(t *testing.T) {
 }
 
 func TestProxy_SendTransactionSmallGasPriceShouldErr(t *testing.T) {
-	proxy := NewProxy(proxyURL)
+	proxy := testnet.NewProxy(proxyURL)
 	owner := getOwnerAddressAsBytes()
 	privateKey := getOwnerPrivateKey()
 	nonce, err := proxy.GetNonce(owner)
@@ -71,9 +72,9 @@ func TestProxy_SendTransactionSmallGasPriceShouldErr(t *testing.T) {
 }
 
 func TestProxy_QueryVariableInvalidContractAddressShouldErr(t *testing.T) {
-	proxy := NewProxy(proxyURL)
+	proxy := testnet.NewProxy(proxyURL)
 
-	vmOutput, err := proxy.QuerySC(SCQueryRequest{
+	vmOutput, err := proxy.QuerySC(testnet.SCQueryRequest{
 		ScAddress: "00000000000000000500086444727b33581181388f6d62a3b3114feeaaaaaaaa",
 		FuncName:  "balanceOf",
 		Args:      []string{getOwnerAddress()},

@@ -1,4 +1,4 @@
-package core
+package integrationtests
 
 import (
 	"encoding/hex"
@@ -6,10 +6,11 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/core"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/myaccounts"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/mystorage"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
-	"github.com/ElrondNetwork/elrond-go/data/trie"
-	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	"github.com/stretchr/testify/assert"
@@ -26,14 +27,14 @@ type testContext struct {
 	BobNonce     uint64
 	BobBalance   *big.Int
 	Accounts     *state.AccountsDB
-	Node         *SimpleDebugNode
+	Node         *core.SimpleDebugNode
 }
 
 func Test_C_ERC20(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/wrc20_arwen_c.wasm")
 
-	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(core.DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -43,7 +44,7 @@ func Test_C_ERC20(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
+	_, err = context.Node.RunSmartContract(core.RunSmartContractCommand{
 		ScAddress:  scAddress,
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
@@ -52,7 +53,7 @@ func Test_C_ERC20(t *testing.T) {
 		TxData:     "transferToken@" + hex.EncodeToString(context.AliceAddress) + "@" + formatHexNumber(1000),
 	})
 
-	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
+	_, err = context.Node.RunSmartContract(core.RunSmartContractCommand{
 		ScAddress:  scAddress,
 		SndAddress: context.AliceAddress,
 		Value:      "0",
@@ -72,7 +73,7 @@ func Test_SOL_ERC20_0_0_3(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
-	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(core.DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -92,7 +93,7 @@ func Test_SOL_ERC20_0_0_3(t *testing.T) {
 func Test_NoPanic_WhenBadCode(t *testing.T) {
 	context := setupTestContext(t)
 
-	_, _, _ = context.Node.DeploySmartContract(DeploySmartContractCommand{
+	_, _, _ = context.Node.DeploySmartContract(core.DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -105,7 +106,7 @@ func Test_NoPanic_SOL_WhenBadFunction(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
-	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(core.DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -116,7 +117,7 @@ func Test_NoPanic_SOL_WhenBadFunction(t *testing.T) {
 	assert.Nil(t, err)
 	context.OwnerNonce++
 
-	_, _ = context.Node.RunSmartContract(RunSmartContractCommand{
+	_, _ = context.Node.RunSmartContract(core.RunSmartContractCommand{
 		ScAddress:  scAddress,
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
@@ -125,7 +126,7 @@ func Test_NoPanic_SOL_WhenBadFunction(t *testing.T) {
 		TxData:     "badFunction@0000@0000",
 	})
 
-	_, _ = context.Node.RunSmartContract(RunSmartContractCommand{
+	_, _ = context.Node.RunSmartContract(core.RunSmartContractCommand{
 		ScAddress:  scAddress,
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
@@ -139,7 +140,7 @@ func Test_NoPanic_SOL_WhenBadArgumens(t *testing.T) {
 	context := setupTestContext(t)
 	smartContractCode := getSmartContractCode("./testdata/0-0-3_sol.wasm")
 
-	scAddress, _, err := context.Node.DeploySmartContract(DeploySmartContractCommand{
+	scAddress, _, err := context.Node.DeploySmartContract(core.DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
 		GasPrice:   1,
@@ -150,7 +151,7 @@ func Test_NoPanic_SOL_WhenBadArgumens(t *testing.T) {
 	assert.Nil(t, err)
 	context.OwnerNonce++
 
-	_, err = context.Node.RunSmartContract(RunSmartContractCommand{
+	_, err = context.Node.RunSmartContract(core.RunSmartContractCommand{
 		ScAddress:  scAddress,
 		SndAddress: context.OwnerAddress,
 		Value:      "0",
@@ -173,12 +174,12 @@ func setupTestContext(t *testing.T) testContext {
 	context.BobNonce = uint64(1)
 	context.BobBalance = big.NewInt(1000000)
 
-	accounts := createInMemoryShardAccountsDB()
-	_ = CreateAccount(accounts, context.OwnerAddress, context.OwnerNonce, context.OwnerBalance)
-	_ = CreateAccount(accounts, context.AliceAddress, context.AliceNonce, context.AliceBalance)
-	_ = CreateAccount(accounts, context.BobAddress, context.BobNonce, context.BobBalance)
+	accounts := mystorage.CreateInMemoryShardAccountsDB()
+	_ = myaccounts.CreateAccount(accounts, context.OwnerAddress, context.OwnerNonce, context.OwnerBalance)
+	_ = myaccounts.CreateAccount(accounts, context.AliceAddress, context.AliceNonce, context.AliceBalance)
+	_ = myaccounts.CreateAccount(accounts, context.BobAddress, context.BobNonce, context.BobBalance)
 
-	node, err := NewSimpleDebugNode(accounts)
+	node, err := core.NewSimpleDebugNode(accounts)
 	assert.Nil(t, err)
 	assert.NotNil(t, node)
 
@@ -210,16 +211,6 @@ func transferToken(t *testing.T, context *testContext, scAddress []byte, transfe
 	err := context.Node.TxProcessor.ProcessTransaction(tx)
 	assert.Nil(t, err)
 	*fromNonce++
-}
-
-func createInMemoryShardAccountsDB() *state.AccountsDB {
-	marshalizer := &marshal.JsonMarshalizer{}
-	store := createMemUnit()
-
-	tr, _ := trie.NewTrie(store, marshalizer, Hasher)
-	adb, _ := state.NewAccountsDB(tr, Hasher, marshalizer, &accountFactory{})
-
-	return adb
 }
 
 func getBalance(context *testContext, scAddress []byte, balanceFunctionName string, accountAddress []byte) *big.Int {
