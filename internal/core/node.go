@@ -8,7 +8,7 @@ import (
 	"math/big"
 
 	arwenConfig "github.com/ElrondNetwork/arwen-wasm-vm/config"
-	"github.com/ElrondNetwork/elrond-go-node-debug/internal/core/stubs"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/stubs"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/state/addressConverters"
 	"github.com/ElrondNetwork/elrond-go/data/typeConverters/uint64ByteSlice"
@@ -174,12 +174,6 @@ func (af *accountFactory) IsInterfaceNil() bool {
 		return true
 	}
 	return false
-}
-
-func CreateEmptyAddress() state.AddressContainer {
-	buff := make([]byte, Hasher.Size())
-
-	return state.NewAddress(buff)
 }
 
 func CreateAccount(accnts state.AccountsAdapter, pubKey []byte, nonce uint64, balance *big.Int) []byte {

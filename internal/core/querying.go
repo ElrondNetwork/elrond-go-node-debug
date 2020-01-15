@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/shared"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/testnet"
 	"github.com/ElrondNetwork/elrond-go/process"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
 	"github.com/gin-gonic/gin"
@@ -34,27 +36,27 @@ func doGetVMValue(context *gin.Context, asType vmcommon.ReturnDataKind) {
 	vmOutput, err := doExecuteQuery(context)
 
 	if err != nil {
-		returnBadRequest(context, "doGetVMValue", err)
+		shared.ReturnBadRequest(context, "doGetVMValue", err)
 		return
 	}
 
 	returnData, err := vmOutput.GetFirstReturnData(asType)
 	if err != nil {
-		returnBadRequest(context, "doGetVMValue", err)
+		shared.ReturnBadRequest(context, "doGetVMValue", err)
 		return
 	}
 
-	returnOkResponse(context, returnData)
+	shared.ReturnOkResponse(context, returnData)
 }
 
 func handlerExecuteQuery(context *gin.Context) {
 	vmOutput, err := doExecuteQuery(context)
 	if err != nil {
-		returnBadRequest(context, "executeQuery", err)
+		shared.ReturnBadRequest(context, "executeQuery", err)
 		return
 	}
 
-	returnOkResponse(context, vmOutput)
+	shared.ReturnOkResponse(context, vmOutput)
 }
 
 func doExecuteQuery(context *gin.Context) (*vmcommon.VMOutput, error) {
@@ -78,7 +80,12 @@ func doExecuteQuery(context *gin.Context) (*vmcommon.VMOutput, error) {
 }
 
 func doExecuteQueryOnTestnet(request VMValueRequest) (*vmcommon.VMOutput, error) {
-	return querySC(request.TestnetNodeEndpoint, request)
+	testnetProxy := testnet.NewProxy(request.TestnetNodeEndpoint)
+	return testnetProxy.QuerySC(testnet.SCQueryRequest{
+		ScAddress: request.ScAddress,
+		FuncName:  request.FuncName,
+		Args:      request.Args,
+	})
 }
 
 func doExecuteQueryOnDebugNode(context *gin.Context, query *process.SCQuery) (*vmcommon.VMOutput, error) {

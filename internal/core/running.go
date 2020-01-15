@@ -7,6 +7,8 @@ import (
 	"math/big"
 
 	"github.com/ElrondNetwork/arwen-wasm-vm/arwen/debugging"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/shared"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/testnet"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
@@ -45,17 +47,17 @@ func handlerRunSmartContract(ginContext *gin.Context) {
 
 	command, err := createRunCommand(ginContext)
 	if err != nil {
-		returnBadRequest(ginContext, "runSmartContract - createRunCommand", err)
+		shared.ReturnBadRequest(ginContext, "runSmartContract - createRunCommand", err)
 		return
 	}
 
 	result, err := ef.RunSmartContract(*command)
 	if err != nil {
-		returnBadRequest(ginContext, "runSmartContract - actual run", err)
+		shared.ReturnBadRequest(ginContext, "runSmartContract - actual run", err)
 		return
 	}
 
-	returnOkResponse(ginContext, result)
+	shared.ReturnOkResponse(ginContext, result)
 }
 
 func createRunCommand(ginContext *gin.Context) (*RunSmartContractCommand, error) {
@@ -105,26 +107,28 @@ func (node *SimpleDebugNode) RunSmartContract(command RunSmartContractCommand) (
 	return node.runSmartContractOnDebugNode(command)
 }
 
-func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractCommand) (sendTransactionResponse, error) {
-	privateKey, err := readPrivateKeyFromPemText(command.PrivateKey)
+func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractCommand) (*testnet.SendTransactionResponse, error) {
+	testnetProxy := testnet.NewProxy(command.TestnetNodeEndpoint)
+
+	privateKey, err := shared.ReadPrivateKeyFromPemText(command.PrivateKey)
 	if err != nil {
-		return sendTransactionResponse{}, err
+		return nil, err
 	}
 
 	publicKey, err := privateKey.GeneratePublic().ToByteArray()
 	if err != nil {
-		return sendTransactionResponse{}, err
+		return nil, err
 	}
 
-	nonce, err := getNonce(command.TestnetNodeEndpoint, publicKey)
+	nonce, err := testnetProxy.GetNonce(publicKey)
 	if err != nil {
-		return sendTransactionResponse{}, err
+		return nil, err
 	}
 
 	valueAsString := command.Value
 	value, ok := big.NewInt(0).SetString(valueAsString, 10)
 	if !ok {
-		return sendTransactionResponse{}, errors.New("value is not in base 10 format")
+		return nil, errors.New("value is not in base 10 format")
 	}
 
 	tx := &transaction.Transaction{
@@ -137,8 +141,12 @@ func (node *SimpleDebugNode) runSmartContractOnTestnet(command RunSmartContractC
 		Data:     []byte(command.TxData),
 	}
 
-	txBuff := signAndStringifyTransaction(tx, privateKey)
-	response, err := sendTransaction(command.TestnetNodeEndpoint, txBuff)
+	signedTransaction, err := shared.NewSignedTransaction(tx, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := testnetProxy.SendTransaction(signedTransaction.Bytes)
 	return response, err
 }
 

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/shared"
+	"github.com/ElrondNetwork/elrond-go-node-debug/internal/testnet"
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
 	vmcommon "github.com/ElrondNetwork/elrond-vm-common"
@@ -48,13 +50,13 @@ func handlerDeploySmartContract(ginContext *gin.Context) {
 
 	command, err := createDeployCommand(ginContext)
 	if err != nil {
-		returnBadRequest(ginContext, "deploySmartContract - createDeployCommand", err)
+		shared.ReturnBadRequest(ginContext, "deploySmartContract - createDeployCommand", err)
 		return
 	}
 
 	scAddress, otherData, err := ef.DeploySmartContract(*command)
 	if err != nil {
-		returnBadRequest(ginContext, "deploySmartContract - actual deploy", err)
+		shared.ReturnBadRequest(ginContext, "deploySmartContract - actual deploy", err)
 		return
 	}
 
@@ -63,7 +65,7 @@ func handlerDeploySmartContract(ginContext *gin.Context) {
 		Other:   otherData,
 	}
 
-	returnOkResponse(ginContext, response)
+	shared.ReturnOkResponse(ginContext, response)
 }
 
 func createDeployCommand(ginContext *gin.Context) (*DeploySmartContractCommand, error) {
@@ -108,7 +110,9 @@ func (node *SimpleDebugNode) DeploySmartContract(command DeploySmartContractComm
 }
 
 func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartContractCommand) ([]byte, interface{}, error) {
-	privateKey, err := readPrivateKeyFromPemText(command.PrivateKey)
+	testnetProxy := testnet.NewProxy(command.TestnetNodeEndpoint)
+
+	privateKey, err := shared.ReadPrivateKeyFromPemText(command.PrivateKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,7 +122,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		return nil, nil, err
 	}
 
-	nonce, err := getNonce(command.TestnetNodeEndpoint, publicKey)
+	nonce, err := testnetProxy.GetNonce(publicKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -132,7 +136,7 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 	tx := &transaction.Transaction{
 		Nonce:    nonce,
 		Value:    value,
-		RcvAddr:  CreateEmptyAddress().Bytes(),
+		RcvAddr:  shared.CreateEmptyAddress().Bytes(),
 		SndAddr:  publicKey,
 		GasLimit: command.GasLimit,
 		GasPrice: command.GasPrice,
@@ -144,8 +148,12 @@ func (node *SimpleDebugNode) deploySmartContractOnTestnet(command DeploySmartCon
 		return nil, nil, err
 	}
 
-	txBuff := signAndStringifyTransaction(tx, privateKey)
-	sendTransactionResponse, err := sendTransaction(command.TestnetNodeEndpoint, txBuff)
+	signedTransaction, err := shared.NewSignedTransaction(tx, privateKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sendTransactionResponse, err := testnetProxy.SendTransaction(signedTransaction.Bytes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -178,7 +186,7 @@ func (node *SimpleDebugNode) deploySmartContractOnDebugNode(command DeploySmartC
 	tx := &transaction.Transaction{
 		Nonce:    account.GetNonce(),
 		Value:    value,
-		RcvAddr:  CreateEmptyAddress().Bytes(),
+		RcvAddr:  shared.CreateEmptyAddress().Bytes(),
 		SndAddr:  []byte(command.SndAddress),
 		GasLimit: command.GasLimit,
 		GasPrice: command.GasPrice,

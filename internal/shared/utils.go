@@ -1,27 +1,18 @@
-package core
+package shared
 
 import (
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
-	"net/http"
 
 	"github.com/ElrondNetwork/elrond-go/crypto"
 	"github.com/ElrondNetwork/elrond-go/crypto/signing"
 	"github.com/ElrondNetwork/elrond-go/crypto/signing/kyber"
-	"github.com/gin-gonic/gin"
+	"github.com/ElrondNetwork/elrond-go/data/state"
 )
 
-func returnBadRequest(context *gin.Context, errScope string, err error) {
-	message := fmt.Sprintf("%s: %s", errScope, err)
-	context.JSON(http.StatusBadRequest, gin.H{"error": message})
-}
-
-func returnOkResponse(context *gin.Context, data interface{}) {
-	context.JSON(http.StatusOK, gin.H{"data": data})
-}
-
-func readPrivateKeyFromPemText(pemText string) (crypto.PrivateKey, error) {
+// ReadPrivateKeyFromPemText reads a private key from a string
+func ReadPrivateKeyFromPemText(pemText string) (crypto.PrivateKey, error) {
 	suite := kyber.NewBlakeSHA256Ed25519()
 	keyGenerator := signing.NewKeyGenerator(suite)
 	keyBlock, _ := pem.Decode([]byte(pemText))
@@ -37,4 +28,9 @@ func readPrivateKeyFromPemText(pemText string) (crypto.PrivateKey, error) {
 
 	privateKey, err := keyGenerator.PrivateKeyFromByteArray(keyBytesDecoded)
 	return privateKey, err
+}
+
+// CreateEmptyAddress creates an empty address
+func CreateEmptyAddress() state.AddressContainer {
+	return state.NewAddress(make([]byte, 32))
 }
