@@ -4,25 +4,46 @@
    # value will be given as string. For example: "0", "1", "15", "metachain"
    DestinationShardAsObserver = "0"
 
-   # NetworkID will be used for network versions
-   NetworkID = "undefined"
-
    # StatusPollingIntervalSec represents the no of seconds between multiple polling for the status for AppStatusHandler
    StatusPollingIntervalSec = 2
 
-   # NodeDisplayName represents the friendly name a user can pick for his node in the status monitor
-   NodeDisplayName = ""
+[StoragePruning]
+   # If the Enabled flag is set to false, then the storers won't divide epochs into separate dbs
+   Enabled = false
+
+   # If this flag is set to true, the node won't delete any database between epochs
+   FullArchive = false
+
+   # NumEpochsToKeep - if the flag above is set to false, this will set the number of epochs to keep in the storage.
+   # Epochs older that (current epoch - NumOfEpochsToKeep) will be removed
+   NumEpochsToKeep = 3
+
+   # NumActivePersisters - this will set the number of persisters to keep active at a moment. This works for both
+   # full archive or not nodes. In case of a node which doesn't have a full archive, it has to be smaller or equal
+   # to the NumOfEpochsToKeep flag
+   NumActivePersisters = 2
 
 [Explorer]
-    Enabled = false
-    IndexerURL = "http://localhost:9200"
+   Enabled = false
+   IndexerURL = "http://localhost:9200"
 
 [MiniBlocksStorage]
     [MiniBlocksStorage.Cache]
-        Size = 100
+        Size = 300
         Type = "LRU"
     [MiniBlocksStorage.DB]
         FilePath = "MiniBlocks"
+        Type = "LvlDBSerial"
+        BatchDelaySeconds = 30
+        MaxBatchSize = 1
+        MaxOpenFiles = 10
+
+[MiniBlockHeadersStorage]
+    [MiniBlockHeadersStorage.Cache]
+        Size = 300
+        Type = "LRU"
+    [MiniBlockHeadersStorage.DB]
+        FilePath = "MiniBlockHeaders"
         Type = "LvlDBSerial"
         BatchDelaySeconds = 30
         MaxBatchSize = 1
@@ -50,26 +71,15 @@
         MaxBatchSize = 1
         MaxOpenFiles = 10
 
-[ShardDataStorage]
-    [ShardDataStorage.Cache]
+[BootstrapStorage]
+    [BootstrapStorage.Cache]
         Size = 1000
         Type = "LRU"
-    [ShardDataStorage.DB]
-        FilePath = "ShardData"
+    [BootstrapStorage.DB]
+        FilePath = "BootstrapData"
         Type = "LvlDBSerial"
         BatchDelaySeconds = 30
-        MaxBatchSize = 30
-        MaxOpenFiles = 10
-
-[PeerDataStorage]
-    [PeerDataStorage.Cache]
-        Size = 1000
-        Type = "LRU"
-    [PeerDataStorage.DB]
-        FilePath = "PeerData"
-        Type = "LvlDBSerial"
-        BatchDelaySeconds = 30
-        MaxBatchSize = 30
+        MaxBatchSize = 1
         MaxOpenFiles = 10
 
 [MetaBlockStorage]
@@ -85,7 +95,7 @@
 
 [TxStorage]
     [TxStorage.Cache]
-        Size = 250000
+        Size = 75000
         Type = "LRU"
     [TxStorage.DB]
         FilePath = "Transactions"
@@ -96,13 +106,35 @@
 
 [UnsignedTransactionStorage]
     [UnsignedTransactionStorage.Cache]
-        Size = 100000
+        Size = 75000
         Type = "LRU"
     [UnsignedTransactionStorage.DB]
         FilePath = "UnsignedTransactions"
         Type = "LvlDBSerial"
         BatchDelaySeconds = 15
         MaxBatchSize = 45000
+        MaxOpenFiles = 10
+
+[RewardTxStorage]
+    [RewardTxStorage.Cache]
+        Size = 75000
+        Type = "LRU"
+    [RewardTxStorage.DB]
+        FilePath = "RewardTransactions"
+        Type = "LvlDBSerial"
+        BatchDelaySeconds = 15
+        MaxBatchSize = 45000
+        MaxOpenFiles = 10
+
+[StatusMetricsStorage]
+    [StatusMetricsStorage.Cache]
+        Size = 1000
+        Type = "LRU"
+    [StatusMetricsStorage.DB]
+        FilePath = "StatusMetricsStorageDB"
+        Type = "LvlDBSerial"
+        BatchDelaySeconds = 15
+        MaxBatchSize = 1
         MaxOpenFiles = 10
 
 [ShardHdrNonceHashStorage]
@@ -129,70 +161,82 @@
 
 [AccountsTrieStorage]
     [AccountsTrieStorage.Cache]
-        Size = 100000
+        Size = 75000
         Type = "LRU"
     [AccountsTrieStorage.DB]
-        FilePath = "AccountsTrie"
+        FilePath = "AccountsTrie/MainDB"
         Type = "LvlDBSerial"
-        BatchDelaySeconds = 15
+        BatchDelaySeconds = 5
         MaxBatchSize = 45000
         MaxOpenFiles = 10
+
+[EvictionWaitingList]
+    Size = 100
+    [EvictionWaitingList.DB]
+        FilePath = "EvictionWaitingList"
+        Type = "LvlDBSerial"
+        BatchDelaySeconds = 5
+        MaxBatchSize = 10000
+        MaxOpenFiles = 10
+
+[TrieSnapshotDB]
+     FilePath = "TrieSnapshot"
+     Type = "LvlDBSerial"
+     BatchDelaySeconds = 15
+     MaxBatchSize = 40000
+     MaxOpenFiles = 10
+
+[PeerAccountsTrieStorage]
+    [PeerAccountsTrieStorage.Cache]
+        Size = 75000
+        Type = "LRU"
+    [PeerAccountsTrieStorage.DB]
+        FilePath = "PeerAccountsTrie/MainDB"
+        Type = "LvlDBSerial"
+        BatchDelaySeconds = 5
+        MaxBatchSize = 45000
+        MaxOpenFiles = 10
+
+[HeadersPoolConfig]
+    MaxHeadersPerShard = 1000
+    NumElementsToRemoveOnEviction = 200
 
 [BadBlocksCache]
     Size = 1000
     Type = "LRU"
 
 [TxBlockBodyDataPool]
-    Size = 100
-    Type = "LRU"
-
-[StateBlockBodyDataPool]
-    Size = 1000
+    Size = 300
     Type = "LRU"
 
 [PeerBlockBodyDataPool]
     Size = 1000
     Type = "LRU"
 
-[BlockHeaderDataPool]
-    Size = 1000
-    Type = "LRU"
-
-[BlockHeaderNoncesDataPool]
-    Size = 1000
-    Type = "LRU"
-
-[MetaHeaderNoncesDataPool]
-    Size = 1000
-    Type = "LRU"
-
 [TxDataPool]
-    Size = 250000
-    Type = "FIFOSharded"
+    Size = 900000
+    SizeInBytes = 524288000
+    Type = "TxCache"
     Shards = 16
 
+[TrieNodesDataPool]
+    Size = 50000
+    Type = "LRU"
+
 [UnsignedTransactionDataPool]
-    Size = 100000
+    Size = 75000
     Type = "LRU"
 
-[ShardHeadersDataPool]
-    Size = 1000
+[RewardTransactionDataPool]
+    Size = 75000
     Type = "LRU"
-
-[MiniBlockHeaderHashesDataPool]
-    Size = 1000
-    Type = "LRU"
-
-[MetaBlockBodyDataPool]
-    Size = 1000
-    Type = "LRU"
-
-[Logger]
-    Path = "logs"
-    StackTraceDepth = 2
 
 [Address]
     Length = 32
+    Prefix = "0x"
+
+[BLSPublicKey]
+    Length = 128
     Prefix = "0x"
 
 [Hasher]
@@ -201,8 +245,19 @@
 [MultisigHasher]
    Type = "blake2b"
 
+# Marshalizer configuration
+# Type idenftifies the marshalizer
+# SizeCheckDelta the maximum allow drift between the input data buffer and
+#     the reencoded version (in percents).
+#     0 disables the feature.
 [Marshalizer]
    Type = "json"
+   SizeCheckDelta = 0
+
+# TODO: change this config to real numbers before merging to development
+[EpochStartConfig]
+    MinRoundsBetweenEpochs = 100000
+    RoundsPerEpoch         = 100000
 
 # ResourceStats, if enabled, will output in a folder called "stats"
 # resource statistics. For example: number of active go routines, memory allocation, number of GC sweeps, etc.
@@ -218,6 +273,16 @@
    MinTimeToWaitBetweenBroadcastsInSec = 20
    MaxTimeToWaitBetweenBroadcastsInSec = 25
    DurationInSecToConsiderUnresponsive = 60
+   [Heartbeat.HeartbeatStorage]
+       [Heartbeat.HeartbeatStorage.Cache]
+           Size = 100
+           Type = "LRU"
+       [Heartbeat.HeartbeatStorage.DB]
+           FilePath = "HeartbeatStorage"
+           Type = "LvlDBSerial"
+           BatchDelaySeconds = 15
+           MaxBatchSize = 300
+           MaxOpenFiles = 10
 
 # Consensus type which will be used (the current implementation can manage "bn" and "bls")
 # When consensus type is "bls" the multisig hasher type should be "blake2b"
@@ -225,7 +290,11 @@
    Type = "bls"
 
 [NTPConfig]
-   Host = "time.google.com"
+   Hosts = ["time.google.com", "time.cloudflare.com",  "time.apple.com", "time.windows.com"]
    Port = 123
-   Timeout = 0  # Setting 0 means 'use default value'
+   TimeoutMilliseconds = 100
    Version = 0  # Setting 0 means 'use default value'
+
+[StateTrieConfig]
+    RoundsModulus = 100
+    PruningEnabled = true
