@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/ElrondNetwork/arwen-wasm-vm v0.3.4
 	github.com/ElrondNetwork/elrond-go v0.0.0
-	github.com/ElrondNetwork/elrond-vm-common v0.1.10
+	github.com/ElrondNetwork/elrond-vm-common v0.1.9
 	github.com/gin-gonic/gin v1.3.0
 	github.com/prometheus/common v0.4.1
 	github.com/stretchr/testify v1.4.0

@@ -38,7 +38,7 @@ func CreateStorageService() dataRetriever.StorageService {
 // CreateMemUnit creates a memory unit (storer)
 func CreateMemUnit() storage.Storer {
 	cache, _ := storageUnit.NewCache(storageUnit.LRUCache, 10, 1)
-	persist, _ := memorydb.New()
+	persist := memorydb.New()
 	unit, _ := storageUnit.NewStorageUnit(cache, persist)
 
 	return unit
