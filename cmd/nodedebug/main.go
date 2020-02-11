@@ -17,6 +17,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go/core"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	factoryState "github.com/ElrondNetwork/elrond-go/data/state/factory"
+	trieFactory "github.com/ElrondNetwork/elrond-go/data/trie/factory"
 	"github.com/ElrondNetwork/elrond-go/storage/pathmanager"
 	"github.com/urfave/cli"
 )
@@ -150,7 +151,8 @@ func startDebugNode(ctx *cli.Context) error {
 		return err
 	}
 
-	accountsAdapter, err := state.NewAccountsDB(coreComponents.Trie, coreComponents.Hasher, coreComponents.Marshalizer, accountFactory)
+	trie := coreComponents.TriesContainer.Get([]byte(trieFactory.UserAccountTrie))
+	accountsAdapter, err := state.NewAccountsDB(trie, coreComponents.Hasher, coreComponents.Marshalizer, accountFactory)
 	if err != nil {
 		fmt.Println("could not create accounts adapter: " + err.Error())
 		return err

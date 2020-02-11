@@ -2,10 +2,12 @@ package mystorage
 
 import (
 	"github.com/ElrondNetwork/elrond-go-node-debug/internal/myaccounts"
+	"github.com/ElrondNetwork/elrond-go/config"
 	dataBlock "github.com/ElrondNetwork/elrond-go/data/block"
 	"github.com/ElrondNetwork/elrond-go/data/blockchain"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/data/trie"
+	"github.com/ElrondNetwork/elrond-go/data/trie/evictionWaitingList"
 	"github.com/ElrondNetwork/elrond-go/dataRetriever"
 	"github.com/ElrondNetwork/elrond-go/hashing/sha256"
 	"github.com/ElrondNetwork/elrond-go/marshal"
@@ -61,9 +63,10 @@ func CreateBlockChain() *blockchain.BlockChain {
 // CreateInMemoryShardAccountsDB creates an accounts db
 func CreateInMemoryShardAccountsDB() *state.AccountsDB {
 	store := CreateMemUnit()
+	waitingList, _ := evictionWaitingList.NewEvictionWaitingList(100, memorydb.New(), &marshalizer)
+	trieStorage, _ := trie.NewTrieStorageManager(store, &config.DBConfig{}, waitingList)
+	tr, _ := trie.NewTrie(trieStorage, &marshalizer, hasher)
+	accountsDb, _ := state.NewAccountsDB(tr, hasher, &marshalizer, &myaccounts.AccountFactory{})
 
-	tr, _ := trie.NewTrie(store, &marshalizer, hasher)
-	adb, _ := state.NewAccountsDB(tr, hasher, &marshalizer, &myaccounts.AccountFactory{})
-
-	return adb
+	return accountsDb
 }

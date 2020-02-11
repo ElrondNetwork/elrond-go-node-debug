@@ -13,7 +13,7 @@ import (
 
 func Test_C_ERC20_OnTestnet(t *testing.T) {
 	context := setupTestContext(t)
-	smartContractCode := getSmartContractCode("./testdata/wrc20_arwen_c.wasm")
+	smartContractCode := getSmartContractCode("./testdata/erc20-c/wrc20_arwen.wasm")
 
 	scAddress, _, err := context.Node.DeploySmartContract(core.DeploySmartContractCommand{
 		OnTestnet:           true,

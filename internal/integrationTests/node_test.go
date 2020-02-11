@@ -13,7 +13,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go/data/transaction"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/elrond-go/process/factory"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testContext struct {
@@ -32,7 +32,7 @@ type testContext struct {
 
 func Test_C_ERC20(t *testing.T) {
 	context := setupTestContext(t)
-	smartContractCode := getSmartContractCode("./testdata/wrc20_arwen_c.wasm")
+	smartContractCode := getSmartContractCode("./testdata/erc20-c/wrc20_arwen.wasm")
 
 	scAddress, _, err := context.Node.DeploySmartContract(core.DeploySmartContractCommand{
 		SndAddress: context.OwnerAddress,
@@ -42,7 +42,7 @@ func Test_C_ERC20(t *testing.T) {
 		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine) + "@" + formatHexNumber(5000),
 	})
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	_, err = context.Node.RunSmartContract(core.RunSmartContractCommand{
 		ScAddress:  scAddress,
@@ -62,11 +62,11 @@ func Test_C_ERC20(t *testing.T) {
 		TxData:     "transferToken@" + hex.EncodeToString(context.BobAddress) + "@" + formatHexNumber(500),
 	})
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
-	assert.Equal(t, uint64(4000), getBalance(&context, scAddress, "balanceOf", context.OwnerAddress).Uint64())
-	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
-	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.BobAddress).Uint64())
+	require.Equal(t, uint64(4000), getBalance(&context, scAddress, "balanceOf", context.OwnerAddress).Uint64())
+	require.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.AliceAddress).Uint64())
+	require.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf", context.BobAddress).Uint64())
 }
 
 func Test_SOL_ERC20_0_0_3(t *testing.T) {
@@ -81,13 +81,13 @@ func Test_SOL_ERC20_0_0_3(t *testing.T) {
 		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
 	})
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	context.OwnerNonce++
 
-	assert.Equal(t, uint64(100000000), getBalance(&context, scAddress, "balanceOf(address)", context.OwnerAddress).Uint64())
+	require.Equal(t, uint64(100000000), getBalance(&context, scAddress, "balanceOf(address)", context.OwnerAddress).Uint64())
 
 	transferToken(t, &context, scAddress, "transfer(address,uint256)", context.OwnerAddress, &context.OwnerNonce, context.AliceAddress, 500)
-	assert.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf(address)", context.AliceAddress).Uint64())
+	require.Equal(t, uint64(500), getBalance(&context, scAddress, "balanceOf(address)", context.AliceAddress).Uint64())
 }
 
 func Test_NoPanic_WhenBadCode(t *testing.T) {
@@ -114,7 +114,7 @@ func Test_NoPanic_SOL_WhenBadFunction(t *testing.T) {
 		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
 	})
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	context.OwnerNonce++
 
 	_, _ = context.Node.RunSmartContract(core.RunSmartContractCommand{
@@ -148,7 +148,7 @@ func Test_NoPanic_SOL_WhenBadArgumens(t *testing.T) {
 		TxData:     smartContractCode + "@" + hex.EncodeToString(factory.ArwenVirtualMachine),
 	})
 
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	context.OwnerNonce++
 
 	_, err = context.Node.RunSmartContract(core.RunSmartContractCommand{
@@ -180,8 +180,8 @@ func setupTestContext(t *testing.T) testContext {
 	_ = myaccounts.CreateAccount(accounts, context.BobAddress, context.BobNonce, context.BobBalance)
 
 	node, err := core.NewSimpleDebugNode(accounts)
-	assert.Nil(t, err)
-	assert.NotNil(t, node)
+	require.Nil(t, err)
+	require.NotNil(t, node)
 
 	context.Accounts = accounts
 	context.Node = node
@@ -190,7 +190,11 @@ func setupTestContext(t *testing.T) testContext {
 }
 
 func getSmartContractCode(fileName string) string {
-	code, _ := ioutil.ReadFile(fileName)
+	code, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		panic("Can't get smart contract code")
+	}
+
 	codeEncoded := hex.EncodeToString(code)
 	return codeEncoded
 }
@@ -209,7 +213,7 @@ func transferToken(t *testing.T, context *testContext, scAddress []byte, transfe
 	}
 
 	err := context.Node.TxProcessor.ProcessTransaction(tx)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	*fromNonce++
 }
 
