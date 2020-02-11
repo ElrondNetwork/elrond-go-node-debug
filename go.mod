@@ -1,6 +1,6 @@
 module github.com/ElrondNetwork/elrond-go-node-debug
 
-go 1.12
+go 1.13
 
 require (
 	github.com/ElrondNetwork/arwen-wasm-vm v0.3.4
