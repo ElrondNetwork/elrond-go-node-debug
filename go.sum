@@ -4,6 +4,8 @@ github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOv
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20200211094152-2d1e2cc4572b h1:d9nAY8d7R1923PQOudt8DzbUofMarvZDoni0u9gExJ0=
 github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20200211094152-2d1e2cc4572b/go.mod h1:pH2AXUsZiSMCxPKJz7YBx+ZcXp4FGIQwXFHuJttulzY=
+github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20200213214238-b94df089c45d h1:fvvg0uk1kx1/SGtVlxTlJkEyG1m5viLPck2j2v3KHAM=
+github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20200213214238-b94df089c45d/go.mod h1:pH2AXUsZiSMCxPKJz7YBx+ZcXp4FGIQwXFHuJttulzY=
 github.com/ElrondNetwork/big-int-util v0.0.5 h1:e/9kK++9ZH/SdIYqLSUPRFYrDZmDWDgff3/7SCydq5I=
 github.com/ElrondNetwork/big-int-util v0.0.5/go.mod h1:96viBvoTXLjZOhEvE0D+QnAwg1IJLPAK6GVHMbC7Aw4=
 github.com/ElrondNetwork/concurrent-map v0.1.2 h1:mr2sVF2IPDsJO8DNGzCUiNQOJcadHuIRVZn+QFnCBlE=
