@@ -64,7 +64,7 @@ func CreateBlockChain() *blockchain.BlockChain {
 func CreateInMemoryShardAccountsDB() *state.AccountsDB {
 	store := CreateMemUnit()
 	waitingList, _ := evictionWaitingList.NewEvictionWaitingList(100, memorydb.New(), &marshalizer)
-	trieStorage, _ := trie.NewTrieStorageManager(store, &config.DBConfig{}, waitingList)
+	trieStorage, _ := trie.NewTrieStorageManager(store, config.DBConfig{}, waitingList)
 	tr, _ := trie.NewTrie(trieStorage, &marshalizer, hasher)
 	accountsDb, _ := state.NewAccountsDB(tr, hasher, &marshalizer, &myaccounts.AccountFactory{})
 

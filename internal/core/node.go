@@ -74,31 +74,31 @@ func NewSimpleDebugNode(accounts state.AccountsAdapter) (*SimpleDebugNode, error
 		return nil, err
 	}
 
-	argsParser, err := vmcommon.NewAtArgumentParser()
-	if err != nil {
-		return nil, err
-	}
+	argsParser := vmcommon.NewAtArgumentParser()
 
 	txTypeHandler, err := coordinator.NewTxTypeHandler(shared.AddressConverter, shardCoordinator, accounts)
 	if err != nil {
 		return nil, err
 	}
 
-	scProcessor, err := smartContract.NewSmartContractProcessor(
-		vmContainer,
-		argsParser,
-		Hasher,
-		Marshalizer,
-		accounts,
-		vmFactory.BlockChainHookImpl(),
-		shared.AddressConverter,
-		shardCoordinator,
-		&mock.IntermediateTransactionHandlerMock{},
-		&stubs.MyTransactionFeeHandlerStub{},
-		&mock.FeeHandlerStub{},
-		txTypeHandler,
-		&stubs.MyGasHandlerStub{},
-	)
+	scProcessorArgs := smartContract.ArgsNewSmartContractProcessor{
+		VmContainer:   vmContainer,
+		ArgsParser:    argsParser,
+		Hasher:        Hasher,
+		Marshalizer:   Marshalizer,
+		AccountsDB:    accounts,
+		TempAccounts:  vmFactory.BlockChainHookImpl(),
+		AdrConv:       shared.AddressConverter,
+		Coordinator:   shardCoordinator,
+		ScrForwarder:  &mock.IntermediateTransactionHandlerMock{},
+		TxFeeHandler:  &stubs.MyTransactionFeeHandlerStub{},
+		EconomicsFee:  &stubs.MyFeeHandlerStub{},
+		TxTypeHandler: txTypeHandler,
+		GasHandler:    &stubs.MyGasHandlerStub{},
+		GasMap:        GasMap,
+	}
+
+	scProcessor, err := smartContract.NewSmartContractProcessor(scProcessorArgs)
 	if err != nil {
 		return nil, err
 	}

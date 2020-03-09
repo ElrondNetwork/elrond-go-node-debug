@@ -173,7 +173,7 @@ func (node *SimpleDebugNode) runSmartContractOnDebugNode(command RunSmartContrac
 	}
 
 	if stAcc.Balance.Cmp(value) < 0 {
-		err = stAcc.SetBalanceWithJournal(value)
+		err = stAcc.AddToBalance(value)
 		if err != nil {
 			return nil, err
 		}

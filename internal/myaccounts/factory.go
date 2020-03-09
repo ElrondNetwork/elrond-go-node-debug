@@ -30,7 +30,7 @@ func CreateAccount(accnts state.AccountsAdapter, pubKey []byte, nonce uint64, ba
 	address, _ := shared.AddressConverter.CreateAddressFromPublicKeyBytes(pubKey)
 	account, _ := accnts.GetAccountWithJournal(address)
 	_ = account.(*state.Account).SetNonceWithJournal(nonce)
-	_ = account.(*state.Account).SetBalanceWithJournal(balance)
+	_ = account.(*state.Account).AddToBalance(balance)
 
 	hashCreated, _ := accnts.Commit()
 	return hashCreated

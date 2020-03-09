@@ -7,8 +7,15 @@ import (
 	"github.com/ElrondNetwork/elrond-go/process"
 )
 
+var _ process.FeeHandler = (*MyFeeHandlerStub)(nil)
+
 // MyFeeHandlerStub is a stub.
 type MyFeeHandlerStub struct {
+}
+
+// DeveloperPercentage is a stub.
+func (stub *MyFeeHandlerStub) DeveloperPercentage() float64 {
+	return float64(0.3)
 }
 
 // MaxGasLimitPerBlock is a stub.
@@ -24,6 +31,11 @@ func (stub *MyFeeHandlerStub) ComputeGasLimit(tx process.TransactionWithFeeHandl
 // ComputeFee is a stub.
 func (stub *MyFeeHandlerStub) ComputeFee(tx process.TransactionWithFeeHandler) *big.Int {
 	return big.NewInt(0)
+}
+
+// MinGasPrice is a stub.
+func (stub *MyFeeHandlerStub) MinGasPrice() uint64 {
+	return 10000
 }
 
 // CheckValidityTxValues is a stub.
