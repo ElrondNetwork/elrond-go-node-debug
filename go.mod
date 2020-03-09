@@ -3,17 +3,15 @@ module github.com/ElrondNetwork/elrond-go-node-debug
 go 1.13
 
 require (
-	github.com/ElrondNetwork/arwen-wasm-vm v0.3.4
-	github.com/ElrondNetwork/elrond-go v0.0.0
-	github.com/ElrondNetwork/elrond-vm-common v0.1.9
+	github.com/ElrondNetwork/arwen-wasm-vm v0.3.8-0.20200309083106-cfed6bb4cb83
+	github.com/ElrondNetwork/elrond-go v1.0.90-0.20200309072532-9a90e47c028c
+	github.com/ElrondNetwork/elrond-vm-common v0.1.12
 	github.com/gin-gonic/gin v1.3.0
 	github.com/prometheus/common v0.4.1
 	github.com/stretchr/testify v1.4.0
 	github.com/urfave/cli v1.20.0
 )
 
-replace github.com/ElrondNetwork/elrond-go => github.com/ElrondNetwork/elrond-go v0.0.0-20200211084225-6106693b6059
+replace github.com/ElrondNetwork/elrond-go => github.com/ElrondNetwork/elrond-go v0.0.0-20200309072532-9a90e47c028c
 
-replace github.com/ElrondNetwork/arwen-wasm-vm => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20200213214238-b94df089c45d
-
-replace github.com/ElrondNetwork/arwen-wasm-vm v0.3.4 => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20200213214238-b94df089c45d
+replace github.com/ElrondNetwork/arwen-wasm-vm => github.com/ElrondNetwork/arwen-wasm-vm v0.0.0-20200309083106-cfed6bb4cb83
